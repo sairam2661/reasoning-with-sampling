@@ -1,16 +1,5 @@
 import os
 
-# Set HF cache directories BEFORE importing transformers/datasets
-os.environ["HF_HOME"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface"
-os.environ["HF_HUB_CACHE"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface/hub"
-os.environ["HF_DATASETS_CACHE"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface/datasets"
-os.environ["TRANSFORMERS_CACHE"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface/models"
-
-from huggingface_hub import constants
-print(constants.HF_HOME)
-print(constants.HF_HUB_CACHE)
-
-
 from contextlib import nullcontext
 from glob import glob
 import json
