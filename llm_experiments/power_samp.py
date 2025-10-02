@@ -257,40 +257,6 @@ def format_prompt(question, model, tokenizer, cot=True):
         answer_context = [{"role": "user", "content": content_str}]
         format_str = tokenizer.apply_chat_template(answer_context, tokenize=False, add_generation_prompt=True)
 
-
-    elif model == "olmo":
-        format_str = PROMPT + question
-        if cot:
-            format_str+=COT
-        else:
-            format_str+=BASE
-
-    elif model == "mistral":
-        format_str = PROMPT + question
-        if cot:
-            format_str+=COT
-        else:
-            format_str+=BASE
-
-
-    elif model == "llama":
-        content_str = PROMPT + question
-        if cot:
-            content_str+=COT
-        else:
-            content_str+=BASE
-        answer_context = [{"role": "user", "content": content_str}]
-        format_str = tokenizer.apply_chat_template(answer_context, tokenize=False, add_generation_prompt=True)
-
-    elif model == "qwen-instruct":
-        content_str = PROMPT + question
-        if cot:
-            content_str+=COT
-        else:
-            content_str+=BASE
-        answer_context = [{"role": "user", "content": content_str}]
-        format_str = tokenizer.apply_chat_template(answer_context, tokenize=False, add_generation_prompt=True)
-
     elif model == "phi":
         content_str = PROMPT + question
         if cot:
@@ -309,26 +275,6 @@ def format_prompt(question, model, tokenizer, cot=True):
         answer_context = [{"role": "user", "content": content_str}]
         format_str = tokenizer.apply_chat_template(answer_context, tokenize=False, add_generation_prompt=True)
 
-
-    elif model == "phi4":
-        content_str = PROMPT + question
-        if cot:
-            content_str+=COT
-        else:
-            content_str+=BASE
-        answer_context = [{"role": "user", "content": content_str}]
-        format_str = tokenizer.apply_chat_template(answer_context, tokenize=False, add_generation_prompt=True)
-
-    elif model == "openai":
-        content_str = PROMPT + question
-        if cot:
-            content_str+=COT
-        else:
-            content_str+=BASE
-        answer_context = [{"role": "user", "content": content_str}]
-        format_str = tokenizer.apply_chat_template(answer_context, tokenize=False, add_generation_prompt=True)
-
-
     return format_str
 
 
@@ -338,7 +284,7 @@ def format_prompt(question, model, tokenizer, cot=True):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_str", action = "store", type = str, default = "results/",  dest = "save_str")
-    parser.add_argument("--model", action = "store", default = "qwen", type = str, choices = ["qwen", "qwen-instruct", "qwen_math", "llama", "phi", "olmo", "phi4", "mistral", "tulu", "qwen_grpo", "qwen_math_grpo", "phi_grpo"])
+    parser.add_argument("--model", action = "store", default = "qwen", type = str, choices = ["qwen", "qwen_math", "phi", "tulu", "qwen_grpo", "qwen_math_grpo", "phi_grpo"])
     parser.add_argument("--temperature", action = "store", default = 0.5, type = float, dest = "temperature")
     parser.add_argument("--dataset", action = "store", default = "MATH", type = str)
     parser.add_argument("--cot", action = "store", type = bool, default = True)
@@ -367,26 +313,14 @@ if __name__ == "__main__":
     print(mcmc_steps)
     if model == "qwen":
         model_str = "Qwen/Qwen2.5-7B"
-    elif model == "qwen-instruct":
-        model_str = "Qwen/Qwen2-7B-Instruct"
     elif model == "qwen_math":
         model_str = "Qwen/Qwen2.5-Math-7B"
     elif model == "qwen_grpo":
         model_str = "/net/holy-isilon/ifs/rc_labs/ydu_lab/aakaran/models/grpo"
     elif model == "qwen_math_grpo":
         model_str = "stellalisy/rethink_rlvr_reproduce-ground_truth-qwen2.5_math_7b-lr5e-7-kl0.00-step150"
-    elif model == "llama":
-        model_str = "meta-llama/Llama-3.1-8B-Instruct"
     elif model == "phi":
         model_str = 'microsoft/Phi-3.5-mini-instruct'
-    elif model == "phi4":
-        model_str = 'microsoft/Phi-4-mini-instruct'
-    elif model == "olmo":
-        model_str = "allenai/OLMo-2-1124-7B"
-    elif model == "mistral":
-        model_str = "mistralai/Mistral-7B-v0.1"
-    elif model == "openai":
-        model_str = "openai/gpt-oss-20b"
     elif model == "tulu":
         model_str = "allenai/Llama-3.1-Tulu-3-8B-DPO"
 
@@ -482,7 +416,7 @@ if __name__ == "__main__":
 
     
     df = pd.DataFrame(results)
-    df.to_csv(os.path.join(save_str, model+"_rlcomp_2_base_low_temp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
+    df.to_csv(os.path.join(save_str, model+"_base_power_samp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
     
 
 
