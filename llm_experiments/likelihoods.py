@@ -1,15 +1,5 @@
 import os
 
-# Set HF cache directories BEFORE importing transformers/datasets
-os.environ["HF_HOME"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface"
-os.environ["HF_HUB_CACHE"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface/hub"
-os.environ["HF_DATASETS_CACHE"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface/datasets"
-os.environ["TRANSFORMERS_CACHE"] = "/n/holylabs/LABS/ydu_lab/Lab/aakaran/huggingface/models"
-
-from huggingface_hub import constants
-print(constants.HF_HOME)
-print(constants.HF_HUB_CACHE)
-
 
 from contextlib import nullcontext
 from glob import glob
@@ -147,13 +137,11 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-# --- Fonts / mathtext ---
 plt.rcParams.update({
     "font.family": "Nimbus Roman",   # change to "Times New Roman" if installed
     "mathtext.fontset": "cm",
 })
 
-# --- Extract first (LL) and second (confidence) from tuples ---
 def first(xs):
     return [float(a[0]) for a in xs
             if a is not None and len(a) >= 1 and not (isinstance(a[0], float) and math.isnan(a[0]))]
@@ -170,7 +158,6 @@ mcmc_conf = second(mcmc_lps)
 std_conf  = second(std_lps)
 grpo_conf = second(grpo_lps)
 
-# --- Quick stats ---
 def summarize(name, arr):
     if len(arr) == 0:
         print(f"{name}: (no data)")
@@ -203,7 +190,6 @@ base_kwargs = dict(bins=bins, density=True)
 # ===== Histogram 1: Log-likelihoods =====
 plt.figure(figsize=(6, 6))
 
-# STD & GRPO first (lighter, so MCMC overlays them)
 if len(std_ll):
     plt.hist(std_ll, label="Base", color=palette["Base"],
              alpha=0.75, linewidth=0.6, **base_kwargs)
@@ -211,7 +197,6 @@ if len(grpo_ll):
     plt.hist(grpo_ll, label="GRPO", color=palette["GRPO"],
              alpha=0.75, linewidth=0.6, **base_kwargs)
 
-# MCMC emphasized: darker, more opaque, black edge, optional hatch, higher zorder
 if len(mcmc_ll):
     # Filled bars
     plt.hist(
@@ -221,7 +206,7 @@ if len(mcmc_ll):
 
 plt.xlabel("Average Log-Likelihood", fontsize=19)
 plt.ylabel("Density", fontsize=19)
-# Put MCMC first in legend
+
 handles, labels = plt.gca().get_legend_handles_labels()
 order = [labels.index("Ours")] + [i for i, l in enumerate(labels) if l != "Ours"]
 plt.legend([handles[i] for i in order], [labels[i] for i in order], fontsize=16)
