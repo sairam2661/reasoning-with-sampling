@@ -314,7 +314,7 @@ if __name__ == "__main__":
         model_str = "allenai/Llama-3.1-Tulu-3-8B-DPO"
 
     if dataset_name == "MATH":
-        json_file = 'data/MATH-TTT.json'
+        json_file = 'data/MATH500.json'
         dataset = json.load(open(json_file, "r"))
 
 
