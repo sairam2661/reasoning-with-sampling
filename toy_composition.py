@@ -3,9 +3,12 @@ import math
 import numpy as np
 from functools import partial
 
-
-#need a class of "autoregressive distributions", defining number of tokens, a .gen and .prob function, and next token probabilities
-
+# Toy example of compositional MCMC sampling
+# p has nonzero probability of generating error token E which leads to "off the rails repetition" of all 1's: ...E111111
+# q has very low probability of generating off the rails repeated 1's
+# p and q typically sample from uniform random sequences otherwise
+# p * q should avoid sampling E and 1
+# Naively adding the logits does not avoid the error token, but MCMC sampling from p * q does.
 
 def error_token_p(prefix, T):
     # If prefix contains error token 'E', next token is always '1'.
@@ -60,26 +63,6 @@ def sample_autoregressive(next_token_dist, T, seq_len=None):
         chosen_token = random.choices(tokens, weights=probs, k=1)[0]
         prefix.append(chosen_token)
     return prefix
-
-
-# def log_likelihood(dist, prefix, idx, T):
-#     assert idx < len(prefix)
-#     log_likelihood = 0
-#     for t in range(idx, len(prefix)):
-#         prob = dist(prefix[:t+1], T)[prefix[t]]
-#         log_likelihood += np.log(prob)
-#     return log_likelihood
-
-
-# need partial function
-# def naive_product(p, q, prefix, T):
-#     output_probs = normalize(set_product(p(prefix, T), q(prefix, T)))
-#     return output_probs
-# # def metropolis_hastings(target):
-
-# def unnormalized_naive_product(p, q, prefix, T):
-#     output_probs = set_product(p(prefix, T), q(prefix, T))
-#     return output_probs
 
 
 
@@ -166,7 +149,6 @@ def compositional_sampler(p, q, mcmc_steps, T, context=[], seq_len=None):
 
             
 
-# print("|".join(naive_composition(error_token_p, error_token_q, [], T=20)))
 N = 20
 
 for _ in range(N):
