@@ -62,7 +62,7 @@ def dist_product(logit_p, logit_q):
 def dist_temp_scale(logit_p, temp):
     return logit_p * torch.tensor(1 / temp, dtype=logit_p.dtype, device=logit_p.device)
 
-
+# low-temperature sampling proposal distribution
 def naive_temp(p : AutoregressiveSampler, context, temp, seq_len):
     c = len(context)
     device = p.device
@@ -96,6 +96,8 @@ def naive_temp(p : AutoregressiveSampler, context, temp, seq_len):
 
     return prop, log_probs_norm, log_probs_unnorm
 
+
+# alpha = infty power sampling; temp is for proposal distribution
 def max_swap(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_tokens, block_num=16):
     c = len(context)
     print(f'Temp: {temp}')
@@ -153,13 +155,10 @@ def max_swap(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_token
     acceptance_ratio = acceptances/attempts
     return gen, log_probs_norm, log_probs_unnorm, acceptance_ratio
 
-
-
-
-
-def mcmc_temp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_tokens, block_num=16):
+# power sampling with autoregressive mcmc
+def mcmc_power_samp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_tokens, block_num=16):
     c = len(context)
-    print(f'Temp: {temp}')
+    print(f'alpha: {1/temp}')
     gen = []
     if context is not None:
         gen = context.copy()
@@ -230,15 +229,6 @@ def format_prompt(question, model, tokenizer, cot=True):
         else:
             format_str+=BASE
 
-    elif model == "qwen_grpo":
-        content_str = PROMPT + question
-        if cot:
-            content_str+=COT
-        else:
-            content_str+=BASE
-        answer_context = [{"role": "user", "content": content_str}]
-        format_str = tokenizer.apply_chat_template(answer_context, tokenize=False, add_generation_prompt=True)
-
     elif model == "qwen_math_grpo":
         content_str = PROMPT + question
         if cot:
@@ -284,8 +274,8 @@ def format_prompt(question, model, tokenizer, cot=True):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_str", action = "store", type = str, default = "results/",  dest = "save_str")
-    parser.add_argument("--model", action = "store", default = "qwen", type = str, choices = ["qwen", "qwen_math", "phi", "tulu", "qwen_grpo", "qwen_math_grpo", "phi_grpo"])
-    parser.add_argument("--temperature", action = "store", default = 0.5, type = float, dest = "temperature")
+    parser.add_argument("--model", action = "store", default = "qwen", type = str, choices = ["qwen", "qwen_math", "phi", "tulu", "qwen_math_grpo", "phi_grpo"])
+    parser.add_argument("--temperature", action = "store", default = 0.25, type = float, dest = "temperature")
     parser.add_argument("--dataset", action = "store", default = "MATH", type = str)
     parser.add_argument("--cot", action = "store", type = bool, default = True)
     parser.add_argument("--mcmc_steps", action = "store", type = int, default = 10)
@@ -315,8 +305,6 @@ if __name__ == "__main__":
         model_str = "Qwen/Qwen2.5-7B"
     elif model == "qwen_math":
         model_str = "Qwen/Qwen2.5-Math-7B"
-    elif model == "qwen_grpo":
-        model_str = "/net/holy-isilon/ifs/rc_labs/ydu_lab/aakaran/models/grpo"
     elif model == "qwen_math_grpo":
         model_str = "stellalisy/rethink_rlvr_reproduce-ground_truth-qwen2.5_math_7b-lr5e-7-kl0.00-step150"
     elif model == "phi":
@@ -325,17 +313,13 @@ if __name__ == "__main__":
         model_str = "allenai/Llama-3.1-Tulu-3-8B-DPO"
 
     if dataset_name == "MATH":
-        # dataset_str = "EleutherAI/hendrycks_math"
-        json_file = 'MATH-TTT.json'
+        json_file = 'data/MATH-TTT.json'
         dataset = json.load(open(json_file, "r"))
-        # random.seed(0)
-        # random.shuffle(dataset)
 
 
 
     print("dataset done")
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code = True)
-    # hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype=torch.float32, trust_remote_code = True).to(device)
     hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype="auto", device_map="auto", trust_remote_code = True).to(device)
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
@@ -344,11 +328,6 @@ if __name__ == "__main__":
 
     start = 100*args.batch_idx
     end = 100*(args.batch_idx+1)
-    # start = 0
-    # end = len(dataset)
-    # start = 0
-    # end = 1
-
 
     for problem, data in tqdm(enumerate(dataset[start:end]), desc = "Benchmark on MATH"):
         question = data["prompt"]
@@ -358,9 +337,6 @@ if __name__ == "__main__":
         input_text = format_prompt(question, model, tokenizer, cot)
         input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
         prefx = [idx.item() for idx in input_ids[0]]
-
-        
-        
 
         naive_temp_output = hf_model.generate(input_ids, max_new_tokens=3072, 
                                 return_dict_in_generate=True, output_scores=True, temperature = temp)
@@ -375,21 +351,21 @@ if __name__ == "__main__":
         print(tokenizer.decode(std_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
         print("std done")
 
-        mcmc_temp_output, _, _, acceptance_ratio = mcmc_temp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072)
+        mcmc_power_samp_output, _, _, acceptance_ratio = mcmc_power_samp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072)
 
         print(len(std_output))
         print(len(naive_temp_output))
-        print(len(mcmc_temp_output))
-        print(tokenizer.decode(torch.tensor([mcmc_temp_output], dtype=torch.long, device=device).squeeze().to("cpu"), skip_special_tokens=True))
+        print(len(mcmc_power_samp_output))
+        print(tokenizer.decode(torch.tensor([mcmc_power_samp_output], dtype=torch.long, device=device).squeeze().to("cpu"), skip_special_tokens=True))
         print("mcmc done")
 
         naive_generated_ids = naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
         std_generated_ids = std_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
-        mcmc_temp_ids = torch.tensor([mcmc_temp_output], dtype=torch.long, device=device).squeeze().to("cpu")
+        mcmc_power_samp_ids = torch.tensor([mcmc_power_samp_output], dtype=torch.long, device=device).squeeze().to("cpu")
 
         naive_completion = tokenizer.decode(naive_generated_ids, skip_special_tokens=True)
         std_completion = tokenizer.decode(std_generated_ids, skip_special_tokens=True)
-        mcmc_completion = tokenizer.decode(mcmc_temp_ids, skip_special_tokens=True)
+        mcmc_completion = tokenizer.decode(mcmc_power_samp_ids, skip_special_tokens=True)
 
         naive_answer = parse_answer(naive_completion)
         std_answer = parse_answer(std_completion)
