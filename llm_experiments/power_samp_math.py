@@ -393,7 +393,7 @@ if __name__ == "__main__":
 
     
     df = pd.DataFrame(results)
-    df.to_csv(os.path.join(save_str, model+"_base_power_samp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
+    df.to_csv(os.path.join(save_str, model+"_math_base_power_samp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
     
 
 
