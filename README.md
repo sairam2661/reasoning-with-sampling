@@ -28,7 +28,7 @@ The llm_experiments folder contains .py scripts to run power sampling for MATH50
 
 **.** To run power sampling on MATH500:
 ```bash
-python llm_experiments/power_samp_math.py --mcmc_steps=10 --temp=0.25 --seed=0 --model=qwen_math
+python llm_experiments/power_samp_math.py --mcmc_steps=10 --temp=0.25 --model=qwen_math
 ```
 The output is several .csv files (based on the eval set split) that store the response outputs, correct answers, original prompts, etc.
 
