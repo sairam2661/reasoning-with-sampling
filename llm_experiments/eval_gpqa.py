@@ -9,7 +9,7 @@ def safe_grade(ans, correct_ans):
         return 0
 
 
-def eval_gqpa(fname):
+def eval_gpqa(fname):
     df = pd.read_csv(fname)
     base_correct = 0
     temp_correct = 0
@@ -24,7 +24,7 @@ def eval_gqpa(fname):
     return base_correct, temp_correct, mcmc_correct, total
 
 
-def gqpa_results(fnames):
+def gpqa_results(fnames):
     base_total = 0
     temp_total = 0
     mcmc_total = 0
