@@ -1,4 +1,4 @@
-# Reasoning without Training
+# Training-Free Reasoning
 
 ### [Paper]() | [Project Page](https://aakaran.github.io/training_free_reasoning/)
 
