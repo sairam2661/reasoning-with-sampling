@@ -103,7 +103,7 @@ def naive_temp(p : AutoregressiveSampler, context, temp, seq_len):
 
 
 
-def mcmc_temp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_tokens, block_num=16):
+def mcmc_power_samp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_tokens, block_num=16):
     c = len(context)
     print(f'Temp: {temp}')
     gen = []
@@ -261,12 +261,8 @@ if __name__ == "__main__":
         model_str = "Qwen/Qwen2.5-7B"
     elif model == "qwen_math":
         model_str = "Qwen/Qwen2.5-Math-7B"
-    elif model == "qwen_grpo":
-        model_str = "/net/holy-isilon/ifs/rc_labs/ydu_lab/aakaran/models/grpo"
     elif model == "qwen_math_grpo":
         model_str = "stellalisy/rethink_rlvr_reproduce-ground_truth-qwen2.5_math_7b-lr5e-7-kl0.00-step150"
-    elif model == "phi_grpo":
-        model_str = "/net/holy-isilon/ifs/rc_labs/ydu_lab/aakaran/models/grpo_phi"
     elif model == "phi":
         model_str = 'microsoft/Phi-3.5-mini-instruct'
     elif model == "tulu":
@@ -324,7 +320,7 @@ if __name__ == "__main__":
         print(tokenizer.decode(std_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
         print("std done")
 
-        mcmc_temp_output, _, _, acceptance_ratio = mcmc_temp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072)
+        mcmc_temp_output, _, _, acceptance_ratio = mcmc_power_samp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072)
 
         print(len(std_output))
         print(len(naive_temp_output))
@@ -354,7 +350,7 @@ if __name__ == "__main__":
 
     
     df = pd.DataFrame(results)
-    df.to_csv(os.path.join(save_str, model+"_rlcomp_gpqa_base_low_temp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
+    df.to_csv(os.path.join(save_str, model+"_rlcomp_gpqa_base_power_samp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
     
 
 
