@@ -26,6 +26,9 @@ import transformers
 from utils.parse_utils import parse_answer
 from constants import *
 
+### DESCRIPTION ###
+# power sampling to sample from p^{alpha}, where p is the base model
+# takes in 1/alpha (temperature) as an argument (default 0.25), and mcmc_power_samp implements sampling from p^{alpha} 
 
  
 
