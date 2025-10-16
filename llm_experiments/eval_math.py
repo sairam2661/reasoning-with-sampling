@@ -1,7 +1,7 @@
-import argparse
-from pathlib import Path
-import sys
 import pandas as pd
+import json
+from pathlib import Path
+from typing import List, Dict, Any
 from grader_utils.math_grader import grade_answer
 
 
@@ -13,16 +13,18 @@ def safe_grade(ans, correct_ans):
 
 
 def eval_math(fname):
-    df = pd.read_csv(fname).fillna("")
+    print(fname)
+    df = pd.read_csv(fname)
     base_correct = 0
     temp_correct = 0
     mcmc_correct = 0
     total = len(df)
 
     for i in range(total):
-        base_correct += safe_grade(df["std_answer"].iloc[i], df["correct_answer"].iloc[i])
-        temp_correct += safe_grade(df["naive_answer"].iloc[i], df["correct_answer"].iloc[i])
-        mcmc_correct += safe_grade(df["mcmc_answer"].iloc[i], df["correct_answer"].iloc[i])
+        base_correct += safe_grade(df["std_answer"][i], df["correct_answer"][i])
+        temp_correct += safe_grade(df["naive_answer"][i], df["correct_answer"][i])
+        mcmc_correct += safe_grade(df["mcmc_answer"][i], df["correct_answer"][i])
+
 
     return base_correct, temp_correct, mcmc_correct, total
 
@@ -40,7 +42,7 @@ def math_results(fnames):
         mcmc_total += mcmc
         total += n
 
-    denom = max(total, 1)  # avoid div-by-zero
+    denom = max(total, 1)
     base_acc = base_total / denom
     temp_acc = temp_total / denom
     mcmc_acc = mcmc_total / denom
@@ -56,7 +58,6 @@ def math_results(fnames):
         "temp_acc": temp_acc,
         "mcmc_acc": mcmc_acc,
     }
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
