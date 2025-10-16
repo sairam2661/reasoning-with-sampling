@@ -43,6 +43,8 @@ python llm_experiments/eval_math.py --folder=results/qwen_math/MATH
 
 ```eval_gpqa.py``` is similar, and for ```eval_he.py```, an additional ```--output_fname``` argument is required, as HumanEval collects all responses in a jsonl file (e.g. ```--output_fname=qwen_math_he```).
 
+For AlpacaEval 2.0, follow the instructions in the official repo: https://github.com/tatsu-lab/alpaca_eval
+
 
 **Pass@k Performance**
 
