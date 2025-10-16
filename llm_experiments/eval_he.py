@@ -1,6 +1,5 @@
 import pandas as pd
 import json
-from grader_utils.he_grader import extract_code, entry_point
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -12,14 +11,16 @@ def fnames_to_json(fnames, output_fname, tag, data_file='data/HumanEval.jsonl'):
 
     output_file = output_fname + "_" + tag + ".jsonl"
     with open(output_file, "w") as fout:
-        for fname in fnames:
+        for idx in range(len(fnames)):
+            fname = fnames[idx]
+            print(fname)
             df = pd.read_csv(fname)
             for i in range(len(df)):
                 mult = len(df)
                 task_id = df["id"][i]
-                assert task_id == dataset[i + mult*i]["task_id"]
-                entry_point = dataset[i + mult*i]["entry_point"]
-                prompt = dataset[i + mult*i]["prompt"]
+                assert task_id == dataset[i + mult*idx]["task_id"]
+                entry_point = dataset[i + mult*idx]["entry_point"]
+                prompt = dataset[i + mult*idx]["prompt"]
 
                 if tag=="mcmc":
                     response = df["mcmc_completion"][i]
