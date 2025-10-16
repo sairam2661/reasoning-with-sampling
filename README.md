@@ -1,8 +1,9 @@
 # Reasoning with Sampling
 
-[![rws](teaser.png)](teaser.png)
 
 ### [Paper]() | [Project Page](https://aakaran.github.io/training_free_reasoning/)
+
+[![rws](teaser.png)](teaser.png)
 
 
 This repo contains the official PyTorch implementation of Reasoning with Sampling.
