@@ -1,5 +1,7 @@
 # Reasoning with Sampling
 
+[![rws](teaser.png)](teaser.png)
+
 ### [Paper]() | [Project Page](https://aakaran.github.io/training_free_reasoning/)
 
 
