@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=psamp_math
-#SBATCH -t 1-23:59                 # Runtime in D-HH:MM
+#SBATCH -t 0-23:59                 # Runtime in D-HH:MM
 #SBATCH --mem=200000               # Memory pool for all cores (MB)
 #SBATCH --gres=gpu:nvidia_h100_80gb_hbm3:1
 #SBATCH --array=0-13               # 14 shards × 1 seeds = 14 tasks
