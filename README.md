@@ -34,11 +34,14 @@ The output is several .csv files (based on the shard and seed number) that store
 
 ## Evaluation
 **Single-shot Reasoning**
+
 To grade the responses for single-shot reasoning, collect the .csv files for a given seed run in a folder (e.g. ```results/qwen_math/MATH```) and pass it into ```eval_math.py```:
 
 ```bash
 python llm_experiments/eval_math.py --folder=results/qwen_math/MATH
 ```
+
+```eval_gpqa.py``` is similar, and for ```eval_he.py```, an additional ```--output_fname``` argument is required, as HumanEval collects all responses in a jsonl file (e.g. ```--output_fname=qwen_math_he```).
 
 
 **Pass@k Performance**
