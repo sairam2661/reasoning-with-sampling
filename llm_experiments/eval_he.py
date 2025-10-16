@@ -1,19 +1,22 @@
 import pandas as pd
+import json
 from grader_utils.he_grader import extract_code, entry_point
 
 
+def fnames_to_json(fnames, output_fname, tag, data_file='data/HumanEval.jsonl'):
+    with open(data_file, "r", encoding="utf-8") as f:
+        dataset = [json.loads(line) for line in f if line.strip()]
 
-def fnames_to_json(data_file, fnames, output_fname, tag):
-    
-    output_file = output_fname + "_" + tag
+    output_file = output_fname + "_" + tag + ".jsonl"
     with open(output_file, "w") as fout:
         for fname in fnames:
             df = pd.read_csv(fname)
             for i in range(len(df)):
+                mult = len(df)
                 task_id = df["id"][i]
-                assert task_id == dataset[i]["task_id"]
-                entry_point = dataset[i]["entry_point"]
-                prompt = dataset[i]["prompt"]
+                assert task_id == dataset[i + mult*i]["task_id"]
+                entry_point = dataset[i + mult*i]["entry_point"]
+                prompt = dataset[i + mult*i]["prompt"]
 
                 if tag="mcmc":
                     response = df["mcmc_completion"][i]
@@ -30,8 +33,26 @@ def fnames_to_json(data_file, fnames, output_fname, tag):
                 }
       
                 fout.write(json.dumps(line) + "\n")
+    return output_file
       
 
 
-def he_results(data_file
+def he_results(fnames, output_fname):
+    tags = ["std", "naive", "mcmc"]
+    for tag in tags:
+        output_file = fnames_to_json(fnames, output_fname, tag)
+        entry_point(output_file)
+        
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("folder", type=str)
+    parser.add_argument("outfile", type=str)
+    args = parser.parse_args()
+
+    folder = Path(args.folder)
+    fnames = sorted(str(p) for p in folder.glob("*.csv"))
+    he_results(fnames, args.output_fname)
+    
+    
 
