@@ -1,3 +1,6 @@
+import argparse
+from pathlib import Path
+import sys
 import pandas as pd
 from grader_utils.math_grader import grade_answer
 
@@ -10,16 +13,16 @@ def safe_grade(ans, correct_ans):
 
 
 def eval_math(fname):
-    df = pd.read_csv(fname)
+    df = pd.read_csv(fname).fillna("")
     base_correct = 0
     temp_correct = 0
     mcmc_correct = 0
     total = len(df)
 
     for i in range(total):
-        base_correct += safe_grade(df["std_answer"][i], df["correct_answer"][i])
-        temp_correct += safe_grade(df["naive_answer"][i], df["correct_answer"][i])
-        mcmc_correct += safe_grade(df["mcmc_answer"][i], df["correct_answer"][i])
+        base_correct += safe_grade(df["std_answer"].iloc[i], df["correct_answer"].iloc[i])
+        temp_correct += safe_grade(df["naive_answer"].iloc[i], df["correct_answer"].iloc[i])
+        mcmc_correct += safe_grade(df["mcmc_answer"].iloc[i], df["correct_answer"].iloc[i])
 
     return base_correct, temp_correct, mcmc_correct, total
 
@@ -37,10 +40,13 @@ def math_results(fnames):
         mcmc_total += mcmc
         total += n
 
-    base_acc = base_total / total
-    temp_acc = temp_total / total
-    mcmc_acc = mcmc_total / total
+    denom = max(total, 1)  # avoid div-by-zero
+    base_acc = base_total / denom
+    temp_acc = temp_total / denom
+    mcmc_acc = mcmc_total / denom
 
+    print(f"Files evaluated: {len(fnames)}")
+    print(f"Total questions: {total}")
     print(f"Base accuracy:  {base_acc:.3f}")
     print(f"Temp accuracy:  {temp_acc:.3f}")
     print(f"MCMC accuracy:  {mcmc_acc:.3f}")
@@ -50,3 +56,13 @@ def math_results(fnames):
         "temp_acc": temp_acc,
         "mcmc_acc": mcmc_acc,
     }
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("folder", type=str)
+    args = parser.parse_args()
+
+    folder = Path(args.folder)
+    fnames = sorted(str(p) for p in folder.glob("*.csv"))
+    math_results(fnames)
