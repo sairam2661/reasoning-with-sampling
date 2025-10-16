@@ -46,3 +46,10 @@ python llm_experiments/eval_math.py --folder=results/qwen_math/MATH
 
 **Pass@k Performance**
 
+For pass@k performance, collect the .csv files across seeds in a folder again (e.g. ```results/qwen_math/MATH```) and pass into ```passk_math.py```:
+```bash
+python llm_experiments/passk_math.py --folder=results/qwen_math/MATH
+```
+The output is a plot of the pass@k performance. As with single-shot reasoning, ```eval_gpqa.py``` and ```eval_he.py``` are similar, but for the latter an additional ```--output_fname``` argument is required.
+
+
