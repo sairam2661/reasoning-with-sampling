@@ -1,6 +1,9 @@
 import pandas as pd
 import json
 from grader_utils.he_grader import extract_code, entry_point
+from pathlib import Path
+from typing import List, Dict, Any
+
 
 
 def fnames_to_json(fnames, output_fname, tag, data_file='data/HumanEval.jsonl'):
@@ -18,11 +21,11 @@ def fnames_to_json(fnames, output_fname, tag, data_file='data/HumanEval.jsonl'):
                 entry_point = dataset[i + mult*i]["entry_point"]
                 prompt = dataset[i + mult*i]["prompt"]
 
-                if tag="mcmc":
+                if tag=="mcmc":
                     response = df["mcmc_completion"][i]
-                elif tag="std":
+                elif tag=="std":
                     response = prompt + df["std_completion"][i]
-                elif tag="naive":
+                elif tag=="naive":
                     response = prompt + df["naive_completion"][i]
 
                 code_completion = extract_code(response, entry_point)
