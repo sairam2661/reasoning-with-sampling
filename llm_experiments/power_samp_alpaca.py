@@ -140,8 +140,8 @@ if __name__ == "__main__":
     print("loaded models")
     results = []
 
-    start = 161*args.batch_idx
-    end = min(161*(args.batch_idx+1), N)
+    start = 58*args.batch_idx
+    end = min(58*(args.batch_idx+1), N)
 
     for problem, data in tqdm(enumerate(dataset[start:end]), desc = "Benchmark on ALPACA"):
         source = data["dataset"]
