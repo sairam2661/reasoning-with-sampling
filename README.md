@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 
 ## Sampling
-The llm_experiments folder contains slurm scripts to run power sampling for MATH500 (power_samp_math.py), whose .json is included in llm_experiments/data, as well as HumanEval (power_samp_he.py) and GPQA Diamond (power_samp_gpqa.py), whose corresponding eval sets can be downloaded from their official repos. 
+The llm_experiments folder contains slurm scripts to run power sampling for MATH500 (power_samp_math.py), whose .json is included in llm_experiments/data, as well as HumanEval (```power_samp_he.py```) and GPQA Diamond (```power_samp_gpqa.py```), whose corresponding eval sets can be downloaded from their official repos. 
 
 To run power sampling on MATH500 with 8 seeds and the eval set split across 5 shards:
 ```bash
