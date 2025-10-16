@@ -51,7 +51,7 @@ def he_results(fnames, output_fname):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("folder", type=str)
-    parser.add_argument("outfile", type=str)
+    parser.add_argument("output_fname", type=str)
     args = parser.parse_args()
 
     folder = Path(args.folder)
