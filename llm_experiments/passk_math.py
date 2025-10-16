@@ -40,8 +40,12 @@ def group_fnames_by_seed(fnames: List[str]) -> Tuple[List[List[str]], List[int]]
 
 def plot_passk(fnames):
     grouped_fnames, SEEDS = group_fnames_by_seed(fnames)
-  
-    TOTAL = 
+
+    shard_lengths = []
+    for fname in grouped_fnames[0]:
+        shard_lengths.append(len(pd.read_csv(fname)))
+    TOTAL = int(sum(shard_lengths))
+    
     correct_by_seed = np.zeros((max(SEEDS) + 1, TOTAL), dtype=np.uint8)
     
     for seed in SEEDS:
@@ -60,8 +64,7 @@ def plot_passk(fnames):
     
     for N in range(1, num_seeds + 1):
       accs = []
-      # Enumerate all subsets if small, otherwise sample random subsets
-      if num_seeds <= num_seeds-1 and N <= 5:  # exact enumeration feasible
+      if num_seeds <= num_seeds-1 and N <= 5:
           for subset in itertools.combinations(SEEDS, N):
               subset_correct = correct_by_seed[list(subset), :].max(axis=0)
               accs.append(subset_correct.mean())
