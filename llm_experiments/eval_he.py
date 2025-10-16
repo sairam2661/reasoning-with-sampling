@@ -2,6 +2,7 @@ import pandas as pd
 import json
 from pathlib import Path
 from typing import List, Dict, Any
+from grader_utils.he_grader import entry_point
 
 
 
