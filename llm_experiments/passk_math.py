@@ -41,15 +41,17 @@ def group_fnames_by_seed(fnames: List[str]) -> Tuple[List[List[str]], List[int]]
 def plot_passk(fnames):
     grouped_fnames, SEEDS = group_fnames_by_seed(fnames)
   
-
+    TOTAL = 
     correct_by_seed = np.zeros((max(SEEDS) + 1, TOTAL), dtype=np.uint8)
     
     for seed in SEEDS:
-        for fname, idx in enumerate(grouped_fnames):
+        for idx, fname in enumerate(grouped_fnames[seed]):
           df = pd.read_csv(fname)
           for i in range(len(df)):
               prob_id = idx*(len(df)) + i
               correct_by_seed[seed, prob_id] = safe_grade(df["mcmc_answer"][i], df["correct_answer"][i])
+              # correct_by_seed[seed, prob_id] = safe_grade(df["std_answer"][i], df["correct_answer"][i])
+              # correct_by_seed[seed, prob_id] = safe_grade(df["naive_answer"][i], df["correct_answer"][i])
     
     
     best_of_N_acc = []
