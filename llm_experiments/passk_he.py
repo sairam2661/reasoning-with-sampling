@@ -37,7 +37,7 @@ def fnames_to_json(grouped_fnames, output_fname, tag, data_file='data/HumanEval.
 
     output_file = output_fname + "_full_" + tag + ".jsonl"
     with open(output_file, "a") as fout:
-        for seed in range(grouped_fnames):
+        for seed in range(len(grouped_fnames)):
             fnames = grouped_fnames[seed]
             for idx in range(len(fnames)):
                 fname = fnames[idx]
@@ -73,7 +73,7 @@ def plot_passk(fnames, output_fname):
     tag = "mcmc"
     # tag = "std"
     # tag = "naive"
-    output_file = fnames_to_json(grouped_fnames[seed], output_fname, tag)
+    output_file = fnames_to_json(grouped_fnames, output_fname, tag)
     entry_point(output_file, k="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16")
     
     
@@ -87,5 +87,5 @@ if __name__ == "__main__":
 
     folder = Path(args.folder)
     fnames = sorted(str(p) for p in folder.glob("*.csv"))
-    he_results(fnames, args.output_fname)
+    plot_passk(fnames, args.output_fname)
 
