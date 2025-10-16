@@ -3,6 +3,12 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any
 from grader_utils.he_grader import entry_point
+import itertools
+import re
+from typing import List, Dict, Tuple
+
+_LAST_NUM_RE = re.compile(r"_(\d+)(?=\.[^.]+$)")
+
 
 
 def group_fnames_by_seed(fnames: List[str]) -> Tuple[List[List[str]], List[int]]:
