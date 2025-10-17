@@ -7,7 +7,7 @@
 
 
 This repo contains the official PyTorch implementation of Reasoning with Sampling.
-> [**Reasoning with Sampling: Your Base Model is Smarter Than You Think**]()<br>
+> [**Reasoning with Sampling: Your Base Model is Smarter Than You Think**](https://arxiv.org/abs/2510.14901)<br>
 > [Aayush Karan](https://aakaran.github.io/), [Yilun Du](https://yilundu.github.io/)
 > <br>Harvard<br>
 
