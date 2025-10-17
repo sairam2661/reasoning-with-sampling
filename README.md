@@ -1,7 +1,7 @@
 # Reasoning with Sampling
 
 
-### [Paper]() | [Project Page](https://aakaran.github.io/training_free_reasoning/)
+### [Paper](https://arxiv.org/abs/2510.14901) | [Project Page](https://aakaran.github.io/training_free_reasoning/)
 
 [![rws](teaser.png)](teaser.png)
 
