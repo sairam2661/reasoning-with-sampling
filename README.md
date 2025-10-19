@@ -20,9 +20,8 @@ Run the following script to setup environment.
 ```bash
 git clone https://github.com/aakaran/reasoning-with-sampling.git
 cd reasoning-with-sampling
-conda create -n psamp python=3.10
+conda env create -f environment.yml
 conda activate psamp
-pip install -r requirements.txt
 ```
 
 
