@@ -21,7 +21,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 import transformers
 
-from utils.parse_utils import parse_answer
+from grader_utils.parse_utils import parse_answer
 from constants import *
 from power_samp_utils import *
 
