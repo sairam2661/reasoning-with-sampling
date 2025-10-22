@@ -1,0 +1,29 @@
+# Core scientific
+numpy
+scipy
+pandas
+scikit-learn
+
+# Visualization / animation
+manim
+matplotlib
+pycairo
+
+# HF / LLM utilities (vllm intentionally omitted)
+transformers
+accelerate
+huggingface-hub
+safetensors
+tokenizers
+timm
+datasets
+
+# Server/runtime if needed by your project
+fastapi
+uvicorn
+httpx
+
+# Misc (common utilities used in your earlier file)
+einops
+pydantic
+xformers

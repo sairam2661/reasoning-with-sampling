@@ -49,6 +49,70 @@ class AutoregressiveSampler:
         return torch.log(probs)
 
 
+def _resample_idx_distribution(
+    propose_style: str,
+    current_ids: list,
+    log_probs_norm: list,
+    c: int,
+) -> np.ndarray:
+    seq_len = len(current_ids)
+    actual_weights_len = len(log_probs_norm)
+    
+    if propose_style == "restart":
+        resample_distr = np.zeros(seq_len)
+        resample_distr[c] = 1.0
+        
+    elif propose_style == "uniform":
+        resample_distr = np.zeros(seq_len)
+        resample_distr[c:] = 1.0 / (seq_len - c)
+        
+    elif propose_style == "priority":
+        resample_distr = np.zeros(seq_len)
+        
+        weights = np.exp(-np.array(log_probs_norm))
+        weights = weights - 1
+        weights = np.maximum(weights, 0)
+        
+        if weights.sum() > 0:
+            weights = weights / weights.sum()
+        else:
+            weights = np.ones(actual_weights_len) / actual_weights_len
+        
+        resample_distr[c:c+actual_weights_len] = weights
+        
+    else:
+        raise ValueError(f"Unknown proposal style: {propose_style}")
+    
+    assert np.isclose(resample_distr.sum(), 1.0), f"Distribution doesn't sum to 1: {resample_distr.sum()}"
+    return resample_distr
+
+
+def compute_proposal_logprob(current_ids: list, next_ids: list, log_probs_norm_current: list, log_probs_norm_next: list, propose_style: str, c: int):
+    resample_idx_distr = _resample_idx_distribution(
+        propose_style, current_ids, log_probs_norm_current, c
+    )
+    
+    lcp_idx = c  # Start from end of the end
+    for i in range(c, min(len(current_ids), len(next_ids))):
+        if current_ids[i] == next_ids[i]:
+            lcp_idx = i + 1
+        else:
+            break
+    
+    max_resample_idx = min(lcp_idx + 1, len(current_ids))
+    
+    proposal_logprob = -np.inf
+    for idx in range(c, max_resample_idx):
+        idx_prob = resample_idx_distr[idx]
+        if idx_prob == 0:
+            continue
+        
+        idx_logprob = np.log(idx_prob)
+        suffix_logprob = sum(log_probs_norm_next[idx - c:])        
+        proposal_logprob = np.logaddexp(proposal_logprob, idx_logprob + suffix_logprob)
+    
+    return proposal_logprob
+
 
 # returns probabilities (normed)
 def normalize(dist):
@@ -157,15 +221,15 @@ def max_swap(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_token
     return gen, log_probs_norm, log_probs_unnorm, acceptance_ratio
 
 # power sampling with autoregressive mcmc
-def mcmc_power_samp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_tokens, block_num=16):
+def mcmc_power_samp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_new_tokens, block_num=16, proposal_type="uniform"):
     c = len(context)
     print(f'alpha: {1/temp}')
+    print(f'proposal_type: {proposal_type}')
     gen = []
     if context is not None:
         gen = context.copy()
     log_probs_norm = []
     log_probs_unnorm = []
-
 
     print(max_new_tokens)
     assert max_new_tokens % block_num == 0
@@ -173,7 +237,6 @@ def mcmc_power_samp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_ne
     print(jump_size)
     attempts = 0
     acceptances = 0
-
 
     for _ in tqdm(range(block_num)):
         gen, lp_norm, lp_unnorm = naive_temp(p, gen, temp=temp, seq_len=jump_size+len(gen))
@@ -183,16 +246,68 @@ def mcmc_power_samp(p : AutoregressiveSampler, context, temp, mcmc_steps, max_ne
         for _ in tqdm(range(mcmc_steps)):
             attempts+=1
             t = len(gen)
-            idx = random.randint(c, t-1)
-            # llm query takes the burden of time
-            prop, log_prob_prop, target_log_prob_prop = naive_temp(p, gen[:idx], temp=temp, seq_len=t)
-            s = len(prop)
-            assert(len(log_prob_prop) == s - idx)
-            assert(len(target_log_prob_prop) == s - idx)
-            log_prob_cur = log_probs_norm.copy()[idx-c:s-c]
-            target_log_prob_cur = log_probs_unnorm.copy()[idx-c:s-c]
-            log_r = sum(target_log_prob_prop) + sum(log_prob_cur) - sum(target_log_prob_cur) - sum(log_prob_prop)
+            
+            # Select resampling index based on proposal type
+            if proposal_type == "uniform":
+                # uniform random
+                idx = random.randint(c, t-1)
+                
+                print(f'Resampling from index {idx} (proposal: {proposal_type})')
+                
+                prop, log_prob_prop, target_log_prob_prop = naive_temp(p, gen[:idx], temp=temp, seq_len=t)
+                s = len(prop)
+                assert(len(log_prob_prop) == s - idx)
+                assert(len(target_log_prob_prop) == s - idx)
+                log_prob_cur = log_probs_norm.copy()[idx-c:s-c]
+                target_log_prob_cur = log_probs_unnorm.copy()[idx-c:s-c]
+                
+                log_r = sum(target_log_prob_prop) + sum(log_prob_cur) - sum(target_log_prob_cur) - sum(log_prob_prop)
+                
+            elif proposal_type == "restart":
+                idx = c
+                
+                print(f'Resampling from index {idx} (proposal: {proposal_type})')
+                
+                prop, log_prob_prop, target_log_prob_prop = naive_temp(p, gen[:idx], temp=temp, seq_len=t)
+                s = len(prop)
+                assert(len(log_prob_prop) == s - idx)
+                assert(len(target_log_prob_prop) == s - idx)
+                log_prob_cur = log_probs_norm.copy()[idx-c:s-c]
+                target_log_prob_cur = log_probs_unnorm.copy()[idx-c:s-c]
+                
+                # For restart, q(curr|prop) = q(prop|curr) = 1
+                log_r = sum(target_log_prob_prop) + sum(log_prob_cur) - sum(target_log_prob_cur) - sum(log_prob_prop)
+                
+            elif proposal_type == "priority":
+                resample_idx_distr = _resample_idx_distribution(
+                    proposal_type, gen, log_probs_norm, c
+                )
+                idx = np.random.choice(len(gen), p=resample_idx_distr)
+                
+                print(f'Resampling from index {idx} (proposal: {proposal_type})')
+                
+                prop, log_prob_prop, target_log_prob_prop = naive_temp(p, gen[:idx], temp=temp, seq_len=t)
+                s = len(prop)
+                assert(len(log_prob_prop) == s - idx)
+                assert(len(target_log_prob_prop) == s - idx)
+                log_prob_cur = log_probs_norm.copy()[idx-c:s-c]
+                target_log_prob_cur = log_probs_unnorm.copy()[idx-c:s-c]
+                
+                # q(prop | curr)
+                prop_logprob_curr_to_next = compute_proposal_logprob(
+                    gen, prop, log_probs_norm, log_prob_prop, proposal_type, c
+                )
+                
+                # q(curr | prop)
+                prop_logprob_next_to_cur = compute_proposal_logprob(
+                    prop, gen, log_prob_prop, log_probs_norm, proposal_type, c
+                )
+                
+                # Acceptance ratio
+                log_r = sum(target_log_prob_prop) + prop_logprob_next_to_cur - \
+                        sum(target_log_prob_cur) - prop_logprob_curr_to_next
 
+            # Accept or reject
             if np.random.rand() < np.exp(log_r):
                 acceptances+=1
                 gen = prop.copy()
