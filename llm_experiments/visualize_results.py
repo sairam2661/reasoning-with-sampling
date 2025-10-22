@@ -183,7 +183,6 @@ def visualize_comparison(results_dir):
         improvement = (mcmc_acc - base_acc) * 100
         
         print(f"  {proposal.capitalize()}: {mcmc_acc:.3f} ({df_proposal['mcmc_correct'].sum()}/{len(df_proposal)})", end="")
-        print(f" | Improvement over Base: {improvement:+.1f}%", end="")
         if 'acceptance_ratio' in df_proposal.columns:
             print(f" | Acceptance: {df_proposal['acceptance_ratio'].mean():.3f}")
         else:
