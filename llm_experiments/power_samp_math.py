@@ -26,9 +26,6 @@ from constants import *
 from power_samp_utils import *
 
 
-
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_str", action = "store", type = str, default = "results/",  dest = "save_str")
@@ -39,14 +36,14 @@ if __name__ == "__main__":
     parser.add_argument("--mcmc_steps", action = "store", type = int, default = 10)
     parser.add_argument("--device", action = "store", type = str, dest = "device", default = "cuda" if torch.cuda.is_available() else 'cpu')
     parser.add_argument("--batch_idx", action = "store", type = int, default = 0)
+    parser.add_argument("--batch_size", action="store", type=int, default=100, help="Number of problems per batch")
     parser.add_argument("--seed", action = "store", type = int, default = 0)
     parser.add_argument("--proposal_type", action="store", type=str, default="uniform", choices=["uniform", "priority", "restart"], help="Proposal distribution for MCMC: uniform (prefix), priority (perplexity), or restart")
     parser.add_argument("--skip_baselines", action="store_true", help="Skip baseline methods")
 
     args = parser.parse_args()
 
-    random.seed(0)
-
+    random.seed(args.seed)  # Use args.seed instead of 0
 
     model = args.model
     device = args.device
@@ -58,10 +55,10 @@ if __name__ == "__main__":
     save_str = os.path.join(args.save_str, model)
     os.makedirs(save_str, exist_ok=True)
 
-
     print(model)
     print(device)
     print(mcmc_steps)
+    
     if model == "qwen":
         model_str = "Qwen/Qwen2.5-7B"
     elif model == "qwen_math":
@@ -77,8 +74,6 @@ if __name__ == "__main__":
         json_file = 'data/MATH500.json'
         dataset = json.load(open(json_file, "r"))
 
-
-
     print("dataset done")
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code = True)
     hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, dtype="auto", device_map="auto", trust_remote_code = True)
@@ -86,30 +81,33 @@ if __name__ == "__main__":
 
     print("loaded models")
     
-    # Define the output CSV file path
-    output_file = os.path.join(save_str, f"{model}_math_base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
+    start = args.batch_idx * args.batch_size
+    end = min(start + args.batch_size, len(dataset))
     
-    # Check if file exists and load existing results
+    print(f"Processing problems {start} to {end-1} (batch_idx={args.batch_idx}, batch_size={args.batch_size})")
+    
+    output_file = os.path.join(save_str, "math",
+        f"{model}_math_base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
+    
     if os.path.exists(output_file):
         print(f"Found existing results at {output_file}, loading...")
         df_existing = pd.read_csv(output_file)
         results = df_existing.to_dict('records')
         completed_problems = len(results)
-        print(f"Resuming from problem {completed_problems}")
+        print(f"Resuming from problem {completed_problems} within this batch")
     else:
         results = []
         completed_problems = 0
-    
-    start = 0
-    end = 500
 
-    for problem, data in tqdm(enumerate(dataset[start:end]), desc="Benchmark on MATH"):
-        # Skip already completed problems
-        if problem < completed_problems:
+    for problem_idx in tqdm(range(start, end), desc=f"Batch {args.batch_idx}"):
+        # Skip already completed problems within this batch
+        local_idx = problem_idx - start 
+        if local_idx < completed_problems:
             continue
-            
+        
+        data = dataset[problem_idx]
         question = data["prompt"]
-        print(question)
+        print(f"\nProblem {problem_idx}: {question}")
         answer = data["answer"]
 
         input_text = format_prompt(question, model, tokenizer, cot)
@@ -170,6 +168,7 @@ if __name__ == "__main__":
 
         # Append current result
         results.append({
+            "problem_idx": problem_idx,
             "question": question,
             "correct_answer": answer,
             "naive_completion": naive_completion,
@@ -184,4 +183,9 @@ if __name__ == "__main__":
 
         df = pd.DataFrame(results)
         df.to_csv(output_file, index=False)
-        print(f"Saved results to {output_file} ({len(results)} problems completed)")
+        print(f"Saved results to {output_file} ({len(results)} problems completed in this batch)")
+    
+    print(f"\n{'='*80}")
+    print(f"Batch {args.batch_idx} completed! Processed problems {start}-{end-1}")
+    print(f"Results saved to: {output_file}")
+    print(f"{'='*80}")
