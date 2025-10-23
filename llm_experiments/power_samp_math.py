@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    random.seed(args.seed)  # Use args.seed instead of 0
+    random.seed(args.seed)
 
     model = args.model
     device = args.device
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     print(f"Processing problems {start} to {end-1} (batch_idx={args.batch_idx}, batch_size={args.batch_size})")
     
     output_file = os.path.join(save_str,
-        f"{model}_math_base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
+        f"base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
     
     if os.path.exists(output_file):
         print(f"Found existing results at {output_file}, loading...")
