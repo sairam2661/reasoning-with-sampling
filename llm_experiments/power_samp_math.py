@@ -52,7 +52,7 @@ if __name__ == "__main__":
     temp = args.temperature
     mcmc_steps = args.mcmc_steps
 
-    save_str = os.path.join(args.save_str, model)
+    save_str = os.path.join(args.save_str, model, "math")
     os.makedirs(save_str, exist_ok=True)
 
     print(model)
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     
     print(f"Processing problems {start} to {end-1} (batch_idx={args.batch_idx}, batch_size={args.batch_size})")
     
-    output_file = os.path.join(save_str, "math",
+    output_file = os.path.join(save_str,
         f"{model}_math_base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
     
     if os.path.exists(output_file):
