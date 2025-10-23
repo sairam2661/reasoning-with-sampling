@@ -118,7 +118,7 @@ def main():
     parser.add_argument(
         "--folder",
         type=str,
-        default="results/qwen_math/math",
+        default="llm_experiments/results/qwen_math/math",
         help="Folder containing CSV result files (batched)."
     )
     parser.add_argument(
