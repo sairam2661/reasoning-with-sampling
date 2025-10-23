@@ -8037,3 +8037,109 @@ Therefore, the unicycle's speed is:
    \]
 
 Thus, the unicycle's speed is \(\boxed{12\pi}\) inches per second.",12\pi,0.6,restart
+314,"The point $(0,0)$ is reflected over the vertical line $x=1$.  When its image is then reflected over the line $y=2$, what is the resulting point?
+
+Write your answer in the form $(x, y)$ where $x$ and $y$ are real numbers.","(2,4)"," To solve this problem, we need to perform two reflections: first over the vertical line \(x = 1\) and then over the horizontal line \(y = 2\).
+
+1. **Reflection over the vertical line \(x = 1\):**
+   - The point \((0, 0)\) is reflected over the line \(x = 1\). The reflection of a point \((x, y)\) over the line \(x = a\) is \((2a - x, y)\). So, the reflection of \((0, 0)\) over \(x = 1\) is \((2 \cdot 1 - 0, 0) = (2, 0)\).
+
+2. **Reflection over the horizontal line \(y = 2\):**
+   - The point \((2, 0)\) is reflected over the line \(y = 2\). The reflection of a point \((x, y)\) over the line \(y = b\) is \((x, 2b - y)\). So, the reflection of \((2, 0)\) over \(y = 2\) is \((2, 2 \cdot 2 - 0) = (2, 4)\).
+
+So, the resulting point after both reflections is \((2, 4)\).
+
+Let's confirm this with Python code.
+```python
+# Initial point
+x, y = 0, 0
+
+# Reflection over the vertical line x = 1
+x_reflected = 2 * 1 - x
+
+# Reflection over the horizontal line y = 2
+y_reflected = 2 * 2 - y
+
+# Resulting point
+resulting_point = (x_reflected, y_reflected)
+print(resulting_point)
+```
+```output
+(2, 4)
+```
+The resulting point after reflecting \((0, 0)\) over the vertical line \(x = 1\) and then over the horizontal line \(y = 2\) is \(\boxed{(2, 4)}\).","(2, 4)"," To solve this problem, we need to perform two successive reflections: first over the vertical line \( x = 1 \) and then over the horizontal line \( y = 2 \).
+
+1. **Reflection over the vertical line \( x = 1 \):**
+   - The point \((0, 0)\) is reflected over the line \( x = 1 \).
+   - The formula for reflecting a point \((x, y)\) over the line \( x = a \) is \((2a - x, y)\).
+   - For the point \((0, 0)\) reflected over \( x = 1 \), we get \((2 \cdot 1 - 0, 0) = (2, 0)\).
+
+2. **Reflection over the horizontal line \( y = 2 \):**
+   - The point \((2, 0)\) is now reflected over the line \( y = 2 \).
+   - The formula for reflecting a point \((x, y)\) over the line \( y = b \) is \((x, 2b - y)\).
+   - For the point \((2, 0)\) reflected over \( y = 2 \), we get \((2, 2 \cdot 2 - 0) = (2, 4)\).
+
+So, the resulting point is \((2, 4)\).
+
+Let's use Python to verify this.
+
+First, we'll reflect the point \((0, 0)\) over the line \( x = 1 \) and then reflect the resulting point over the line \( y = 2 \).
+```python
+# Function to reflect a point (x, y) over a vertical line x=a
+def reflect_vertical(x, y, a):
+    return (2 * a - x, y)
+
+# Function to reflect a point (x, y) over a horizontal line y=b
+def reflect_horizontal(x, y, b):
+    return (x, 2 * b - y)
+
+# Original point
+x, y = 0, 0
+
+# Reflect over the line x=1
+reflected_vertical = reflect_vertical(x, y, 1)
+
+# Reflect the result over the line y=2
+resulting_point = reflect_horizontal(reflected_vertical[0], reflected_vertical[1], 2)
+
+print(resulting_point)
+```
+```output
+(2, 4)
+```
+The resulting point after reflecting \((0, 0)\) over the vertical line \( x = 1 \) and then over the horizontal line \( y = 2 \) is \((2, 4)\).
+
+Hence, the resulting point is:
+\[
+\boxed{(2, 4)}
+\]","(2, 4)","Can you solve the following math problem? The point $(0,0)$ is reflected over the vertical line $x=1$.  When its image is then reflected over the line $y=2$, what is the resulting point?
+
+Write your answer in the form $(x, y)$ where $x$ and $y$ are real numbers. Please reason step by step, and put your final answer within \boxed{{}}. To solve this problem, we need to perform two reflections: first over the vertical line \(x = 1\) and then over the horizontal line \(y = 2\).
+
+1. **Reflection over the vertical line \(x = 1\):**
+   - The point \((0, 0)\) is reflected over the line \(x = 1\). The reflection of a point \((x, y)\) over the line \(x = a\) is \((2a - x, y)\). So, the reflection of \((0, 0)\) over \(x = 1\) is \((2 \cdot 1 - 0, 0) = (2, 0)\).
+
+2. **Reflection over the horizontal line \(y = 2\):**
+   - The point \((2, 0)\) is reflected over the line \(y = 2\). The reflection of a point \((x, y)\) over the line \(y = b\) is \((x, 2b - y)\). So, the reflection of \((2, 0)\) over \(y = 2\) is \((2, 2 \cdot 2 - 0) = (2, 4)\).
+
+So, the resulting point after both reflections is \((2, 4)\).
+
+Let's confirm this with Python code.
+```python
+# Initial point
+x, y = 0, 0
+
+# Reflection over the vertical line x = 1
+x_reflected = 2 * 1 - x
+y_reflected = y
+
+# Reflection over the horizontal line y = 2
+x_final = x_reflected
+y_final = 2 * 2 - y_reflected
+
+print(((x_final, y_final)))
+```
+```output
+(2, 4)
+```
+The resulting point after reflecting \((0, 0)\) over the vertical line \(x = 1\) and then over the horizontal line \(y = 2\) is \(\boxed{(2, 4)}\).","(2, 4)",0.25,restart

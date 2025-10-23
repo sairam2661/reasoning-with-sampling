@@ -1,10 +1,8 @@
+import argparse
+from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-from pathlib import Path
-import argparse
 from grader_utils.math_grader import grade_answer
-import numpy as np 
 
 def safe_grade(ans, correct_ans):
     try:
@@ -12,186 +10,148 @@ def safe_grade(ans, correct_ans):
     except Exception:
         return 0
 
-def load_and_evaluate(csv_path):
-    df = pd.read_csv(csv_path)
-    
-    if 'proposal_type' in df.columns:
-        proposal_type = df['proposal_type'].iloc[0]
-    else:
-        # Extract from filename
-        if 'uniform' in str(csv_path):
-            proposal_type = 'uniform'
-        elif 'priority' in str(csv_path):
-            proposal_type = 'priority'
-        elif 'restart' in str(csv_path):
-            proposal_type = 'restart'
-        else:
-            proposal_type = 'unknown'
-    
-    # Grade each answer
-    df['std_correct'] = [safe_grade(ans, correct) for ans, correct in 
-                         zip(df['std_answer'], df['correct_answer'])]
-    df['mcmc_correct'] = [safe_grade(ans, correct) for ans, correct in 
-                          zip(df['mcmc_answer'], df['correct_answer'])]
-    
-    return df, proposal_type
+def ensure_correctness_columns(df):
+    if "std_correct" not in df.columns:
+        df["std_correct"] = [
+            safe_grade(a, c) for a, c in zip(df.get("std_answer", []), df.get("correct_answer", []))
+        ]
+    if "mcmc_correct" not in df.columns:
+        df["mcmc_correct"] = [
+            safe_grade(a, c) for a, c in zip(df.get("mcmc_answer", []), df.get("correct_answer", []))
+        ]
+    return df
 
-def visualize_comparison(results_dir):    
-    results_dir = Path(results_dir)
-    csv_files = sorted(results_dir.glob("*.csv"))
-    
-    if not csv_files:
-        print(f"No CSV files found in {results_dir}")
-        return
-    
-    # Load all results
-    all_data = []
-    for csv_file in csv_files:
-        print(f"Loading {csv_file.name}...")
-        df, proposal_type = load_and_evaluate(csv_file)
-        df['proposal'] = proposal_type
-        all_data.append(df)
-    
-    # Combine all dataframes
-    combined_df = pd.concat(all_data, ignore_index=True)
-    
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-    
-    ax1 = axes[0]
-    
-    methods = []
-    accuracies = []
-    
-    methods.append('Base')
-    accuracies.append(combined_df['std_correct'].mean())
-    
-    proposals = sorted(combined_df['proposal'].unique())
-    for proposal in proposals:
-        df_proposal = combined_df[combined_df['proposal'] == proposal]
-        methods.append(proposal.capitalize())
-        accuracies.append(df_proposal['mcmc_correct'].mean())
-    
-    colors = ['#7EB6D9', '#5B9BD5', '#2E5C8A']  # Change later
-    if len(methods) > 3:
-        colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(methods)))
+def infer_proposal_from_filename(path):
+    name = str(path).lower()
+    if "uniform" in name:
+        return "uniform"
+    if "priority" in name:
+        return "priority"
+    if "restart" in name:
+        return "restart"
+    return "unknown"
+
+def load_one_csv(csv_path):
+    df = pd.read_csv(csv_path)
+    cols = {c: c.strip() for c in df.columns}
+    df.rename(columns=cols, inplace=True)
+
+    if "proposal_type" in df.columns and pd.notna(df["proposal_type"]).all():
+        proposal = df["proposal_type"].astype(str).str.lower()
+        df["proposal"] = proposal
     else:
-        colors = colors[:len(methods)]
-    
-    # Create bar chart
-    bars = ax1.bar(methods, accuracies, color=colors, edgecolor='black', linewidth=1.2, width=0.6)
-    
-    for bar, acc in zip(bars, accuracies):
-        height = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                f'{acc:.3f}',
-                ha='center', va='bottom', fontsize=12, fontweight='bold')
-    
-    ax1.set_ylabel('Accuracy (%)', fontsize=13)
-    ax1.set_title('Method Comparison (MATH 500)', fontsize=15, fontweight='bold', pad=15)
-    ax1.set_ylim([0, min(max(accuracies) * 1.12, 1.0)])
-    ax1.grid(axis='y', alpha=0.3, linestyle='--', linewidth=0.5)
-    ax1.tick_params(axis='x', rotation=0, labelsize=11)
-    ax1.tick_params(axis='y', labelsize=11)
-    ax1.set_axisbelow(True)
-    
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(False)
-    
-    ax2 = axes[1]
-    
-    if 'acceptance_ratio' in combined_df.columns:
-        proposals_list = sorted(combined_df['proposal'].unique())
-        acceptance_data = [combined_df[combined_df['proposal'] == p]['acceptance_ratio'].dropna() 
-                          for p in proposals_list]
-        
-        bp = ax2.boxplot(acceptance_data, labels=[p.capitalize() for p in proposals_list], 
-                        patch_artist=True, showmeans=True,
-                        boxprops=dict(linewidth=1.5),
-                        whiskerprops=dict(linewidth=1.5),
-                        capprops=dict(linewidth=1.5),
-                        medianprops=dict(linewidth=2, color='darkred'))
-        
-        box_colors = plt.cm.Blues(np.linspace(0.5, 0.8, len(proposals_list)))
-        for patch, color in zip(bp['boxes'], box_colors):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.8)
-        
-        for i, (proposal, data) in enumerate(zip(proposals_list, acceptance_data)):
-            mean_val = data.mean()
-            ax2.text(i+1, mean_val, f'{mean_val:.3f}', 
-                    ha='center', va='bottom', fontsize=11, fontweight='bold')
-        
-        ax2.set_ylabel('Acceptance Ratio', fontsize=13)
-        ax2.set_title('MCMC Acceptance Ratios', fontsize=15, fontweight='bold', pad=15)
-        ax2.grid(axis='y', alpha=0.3, linestyle='--', linewidth=0.5)
-        ax2.tick_params(labelsize=11)
-        ax2.spines['top'].set_visible(False)
-        ax2.spines['right'].set_visible(False)
-    else:
-        ax2.text(0.5, 0.5, 'No acceptance ratio data', 
-                ha='center', va='center', fontsize=12)
-        ax2.set_xlim([0, 1])
-        ax2.set_ylim([0, 1])
-    
-    ax3 = axes[2]
-    
-    cumulative_base = combined_df.groupby(combined_df.index)['std_correct'].first().expanding().mean()
-    ax3.plot(cumulative_base.index, cumulative_base, 
-            label='Base', linewidth=2.5, linestyle='--', color='#7EB6D9', alpha=0.9)
-    
-    colors_mcmc = plt.cm.Blues(np.linspace(0.5, 0.9, len(proposals)))
-    for i, proposal in enumerate(proposals):
-        df_proposal = combined_df[combined_df['proposal'] == proposal].sort_index()
-        cumulative_acc = df_proposal['mcmc_correct'].expanding().mean()
-        ax3.plot(cumulative_acc.index, cumulative_acc, 
-                label=proposal.capitalize(), linewidth=2.5, color=colors_mcmc[i])
-    
-    ax3.set_xlabel('Number of Problems', fontsize=13)
-    ax3.set_ylabel('Cumulative Accuracy', fontsize=13)
-    ax3.set_title('Cumulative Accuracy Over Time', fontsize=15, fontweight='bold', pad=15)
-    ax3.legend(loc='best', fontsize=11, frameon=True, shadow=True)
-    ax3.grid(alpha=0.3, linestyle='--', linewidth=0.5)
-    ax3.tick_params(labelsize=11)
-    ax3.spines['top'].set_visible(False)
-    ax3.spines['right'].set_visible(False)
-    
+        df["proposal"] = infer_proposal_from_filename(csv_path)
+
+    if "problem_idx" not in df.columns:
+        raise ValueError(f"'problem_idx' column is missing in {csv_path}")
+
+    df = ensure_correctness_columns(df)
+
+    keep_cols = [
+        "problem_idx", "correct_answer",
+        "std_answer", "std_correct",
+        "mcmc_answer", "mcmc_correct",
+        "proposal"
+    ]
+    for opt in ("acceptance_ratio",):
+        if opt in df.columns:
+            keep_cols.append(opt)
+
+    return df[keep_cols].copy()
+
+
+def aggregate_for_plot(all_df):
+    methods, accuracies, counts = [], [], []
+
+    base_df = (all_df
+               .sort_values(["problem_idx"])
+               .drop_duplicates(subset=["problem_idx"], keep="first"))
+    base_acc = base_df["std_correct"].mean() if not base_df.empty else 0.0
+    base_n = int(base_df.shape[0])
+    methods.append("Base")
+    accuracies.append(base_acc)
+    counts.append(base_n)
+
+    proposals = sorted([p for p in all_df["proposal"].dropna().unique()])
+    for p in proposals:
+        sub = (all_df[all_df["proposal"] == p]
+               .sort_values(["problem_idx"])
+               .drop_duplicates(subset=["problem_idx"], keep="first"))
+        acc = sub["mcmc_correct"].mean() if not sub.empty else 0.0
+        n = int(sub.shape[0])
+        methods.append(p.capitalize())
+        accuracies.append(acc)
+        counts.append(n)
+
+    return methods, accuracies, counts
+
+def plot_bar(methods, accuracies, counts, title, out_png):
+    fig, ax = plt.subplots(figsize=(8.5, 5.0))
+
+    x = range(len(methods))
+    bars = ax.bar(x, accuracies, edgecolor="black", linewidth=1.0)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(methods, rotation=0)
+    ax.set_ylim(0.0, min(1.0, max(accuracies + [0.0]) * 1.12 if accuracies else 1.0))
+    ax.set_ylabel("Accuracy", fontsize=12)
+    ax.set_title(title, fontsize=14, pad=10)
+    ax.grid(axis="y", alpha=0.3, linestyle="--", linewidth=0.5)
+    ax.set_axisbelow(True)
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+
+    for rect, acc, n in zip(bars, accuracies, counts):
+        h = rect.get_height()
+        label = f"{acc*100:.1f}% · n={n}"
+        ax.text(rect.get_x() + rect.get_width() / 2.0,
+                h + 0.01,
+                label,
+                ha="center", va="bottom", fontsize=11)
+
     plt.tight_layout()
+    fig.savefig(out_png, dpi=300, bbox_inches="tight")
+    print(f"Saved: {out_png}")
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--folder",
+        type=str,
+        default="results/qwen_math/math",
+        help="Folder containing CSV result files (batched)."
+    )
+    parser.add_argument(
+        "--pattern",
+        type=str,
+        default="*.csv",
+        help="Glob pattern for result CSVs (default: *.csv)."
+    )
+    parser.add_argument(
+        "--title",
+        type=str,
+        default="Method Comparison (MATH 500)",
+        help="Plot title."
+    )
+    args = parser.parse_args()
+
+    results_dir = Path(args.folder)
+    csv_files = sorted(results_dir.glob(args.pattern))
+    if not csv_files:
+        raise FileNotFoundError(f"No CSV files matched {args.pattern} in {results_dir}")
+
+    frames = []
+    for f in csv_files:
+        print(f"Loading {f.name} ...")
+        df = load_one_csv(f)
+        frames.append(df)
+
+    combined = pd.concat(frames, ignore_index=True)
+
+    methods, accuracies, counts = aggregate_for_plot(combined)
     
-    output_path = results_dir / 'comparison_visualization.png'
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    print(f"\nVisualization saved to: {output_path}")
-    
-    output_pdf = results_dir / 'comparison_visualization.pdf'
-    plt.savefig(output_pdf, bbox_inches='tight')
-    print(f"PDF saved to: {output_pdf}")
-    
-    plt.show()
-    
-    # Print statistics
-    print("\n" + "="*80)
-    print("RESULTS SUMMARY")
-    print("="*80)
-    
-    print(f"\nBase (standard sampling, temp=1.0):")
-    print(f"  Accuracy: {combined_df['std_correct'].mean():.3f} ({combined_df['std_correct'].sum()}/{len(combined_df)})")
-    
-    print(f"\nMCMC Results by Proposal:")
-    for proposal in sorted(combined_df['proposal'].unique()):
-        df_proposal = combined_df[combined_df['proposal'] == proposal]
-        base_acc = df_proposal['std_correct'].mean()
-        mcmc_acc = df_proposal['mcmc_correct'].mean()
-        improvement = (mcmc_acc - base_acc) * 100
-        
-        print(f"  {proposal.capitalize()}: {mcmc_acc:.3f} ({df_proposal['mcmc_correct'].sum()}/{len(df_proposal)})", end="")
-        if 'acceptance_ratio' in df_proposal.columns:
-            print(f" | Acceptance: {df_proposal['acceptance_ratio'].mean():.3f}")
-        else:
-            print()
+    out_png = results_dir / "comparison_bar.png"
+    plot_bar(methods, accuracies, counts, args.title, out_png)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--folder", type=str, default="llm_experiments/results/qwen_math/",
-                       help="Folder containing CSV result files")
-    args = parser.parse_args()
-    
-    visualize_comparison(args.folder)
+    main()
