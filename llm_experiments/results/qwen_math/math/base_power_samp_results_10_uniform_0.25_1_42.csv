@@ -1,0 +1,209 @@
+problem_idx,question,correct_answer,naive_completion,naive_answer,std_completion,std_answer,mcmc_completion,mcmc_answer,acceptance_ratio,proposal_type
+250,"If $a$ is the $x$-intercept, $b$ is the $y$-intercept, and $m$ is the slope of the line with equation $\frac{x}4 + \frac{y}{12} = 1$, then what is the value of $a + b + m$?",13," To solve the given problem, we need to determine the \(x\)-intercept \(a\), the \(y\)-intercept \(b\), and the slope \(m\) of the line given by the equation \(\frac{x}{4} + \frac{y}{12} = 1\). Then, we will find the value of \(a + b + m\).
+
+### Step 1: Find the \(x\)-intercept \(a\)
+The \(x\)-intercept occurs where \(y = 0\). Substitute \(y = 0\) into the equation:
+\[
+\frac{x}{4} + \frac{0}{12} = 1
+\]
+Simplify the equation:
+\[
+\frac{x}{4} = 1
+\]
+Solve for \(x\):
+\[
+x = 4
+\]
+Thus, the \(x\)-intercept \(a\) is:
+\[
+a = 4
+\]
+
+### Step 2: Find the \(y\)-intercept \(b\)
+The \(y\)-intercept occurs where \(x = 0\). Substitute \(x = 0\) into the equation:
+\[
+\frac{0}{4} + \frac{y}{12} = 1
+\]
+Simplify the equation:
+\[
+\frac{y}{12} = 1
+\]
+Solve for \(y\):
+\[
+y = 12
+\]
+Thus, the \(y\)-intercept \(b\) is:
+\[
+b = 12
+\]
+
+### Step 3: Find the slope \(m\)
+To find the slope, we need to rewrite the equation in slope-intercept form \(y = mx + c\). Start with the given equation:
+\[
+\frac{x}{4} + \frac{y}{12} = 1
+\]
+Multiply every term by 12 to clear the denominators:
+\[
+3x + y = 12
+\]
+Rearrange the equation to solve for \(y\):
+\[
+y = -3x + 12
+\]
+From this form, we can see that the slope \(m\) is:
+\[
+m = -3
+\]
+
+### Step 4: Calculate \(a + b + m\)
+Now, add the values of \(a\), \(b\), and \(m\):
+\[
+a + b + m = 4 + 12 + (-3)
+\]
+Simplify the expression:
+\[
+a + b + m = 13
+\]
+
+Thus, the value of \(a + b + m\) is:
+\[
+\boxed{13}
+\]",13," To solve the problem, we need to determine the \(x\)-intercept \(a\), the \(y\)-intercept \(b\), and the slope \(m\) of the line given by the equation \(\frac{x}{4} + \frac{y}{12} = 1\). Then, we will find the value of \(a + b + m\).
+
+### Step 1: Find the \(x\)-intercept \(a\)
+The \(x\)-intercept occurs when \(y = 0\). Substitute \(y = 0\) into the equation:
+\[
+\frac{x}{4} + \frac{0}{12} = 1
+\]
+This simplifies to:
+\[
+\frac{x}{4} = 1
+\]
+Solving for \(x\):
+\[
+x = 4
+\]
+Thus, the \(x\)-intercept \(a\) is:
+\[
+a = 4
+\]
+
+### Step 2: Find the \(y\)-intercept \(b\)
+The \(y\)-intercept occurs when \(x = 0\). Substitute \(x = 0\) into the equation:
+\[
+\frac{0}{4} + \frac{y}{12} = 1
+\]
+This simplifies to:
+\[
+\frac{y}{12} = 1
+\]
+Solving for \(y\):
+\[
+y = 12
+\]
+Thus, the \(y\)-intercept \(b\) is:
+\[
+b = 12
+\]
+
+### Step 3: Find the slope \(m\)
+To find the slope, we need to rewrite the equation in slope-intercept form \(y = mx + c\). Start with the given equation:
+\[
+\frac{x}{4} + \frac{y}{12} = 1
+\]
+Multiply every term by 12 to clear the denominators:
+\[
+3x + y = 12
+\]
+Rearrange to solve for \(y\):
+\[
+y = -3x + 12
+\]
+From this form, we can see that the slope \(m\) is:
+\[
+m = -3
+\]
+
+### Step 4: Calculate \(a + b + m\)
+Now, we add the \(x\)-intercept \(a\), the \(y\)-intercept \(b\), and the slope \(m\):
+\[
+a + b + m = 4 + 12 + (-3)
+\]
+Simplify the expression:
+\[
+a + b + m = 4 + 12 - 3 = 13
+\]
+
+Thus, the value of \(a + b + m\) is:
+\[
+\boxed{13}
+\]",13,"Can you solve the following math problem? If $a$ is the $x$-intercept, $b$ is the $y$-intercept, and $m$ is the slope of the line with equation $\frac{x}4 + \frac{y}{12} = 1$, then what is the value of $a + b + m$? Please reason step by step, and put your final answer within \boxed{{}}. To solve the problem, we need to determine the \(x\)-intercept \(a\), the \(y\)-intercept \(b\), and the slope \(m\) of the line given by the equation \(\frac{x}{4} + \frac{y}{12} = 1\). Then, we will find the value of \(a + b + m\).
+
+### Step 1: Find the \(x\)-intercept \(a\)
+The \(x\)-intercept occurs where \(y = 0\). Substitute \(y = 0\) into the equation:
+\[
+\frac{x}{4} + \frac{0}{12} = 1
+\]
+Simplify the equation:
+\[
+\frac{x}{4} = 1
+\]
+Solve for \(x\):
+\[
+x = 4
+\]
+Thus, the \(x\)-intercept \(a\) is:
+\[
+a = 4
+\]
+
+### Step 2: Find the \(y\)-intercept \(b\)
+The \(y\)-intercept occurs where \(x = 0\). Substitute \(x = 0\) into the equation:
+\[
+\frac{0}{4} + \frac{y}{12} = 1
+\]
+Simplify the equation:
+\[
+\frac{y}{12} = 1
+\]
+Solve for \(y\):
+\[
+y = 12
+\]
+Thus, the \(y\)-intercept \(b\) is:
+\[
+b = 12
+\]
+
+### Step 3: Find the slope \(m\)
+To find the slope, we need to rewrite the equation in slope-intercept form \(y = mx + c\). Start with the given equation:
+\[
+\frac{x}{4} + \frac{y}{12} = 1
+\]
+Multiply every term by 12 to clear the denominators:
+\[
+3x + y = 12
+\]
+Rearrange the equation to solve for \(y\):
+\[
+y = -3x + 12
+\]
+From this form, we can see that the slope \(m\) is:
+\[
+m = -3
+\]
+
+### Step 4: Calculate \(a + b + m\)
+Now, add the values of \(a\), \(b\), and \(m\):
+\[
+a + b + m = 4 + 12 + (-3)
+\]
+Simplify the expression:
+\[
+a + b + m = 13
+\]
+
+Thus, the value of \(a + b + m\) is:
+\[
+\boxed{13}
+\]",13,0.8666666666666667,uniform
