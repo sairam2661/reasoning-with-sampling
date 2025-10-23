@@ -39,13 +39,14 @@ if __name__ == "__main__":
     parser.add_argument("--mcmc_steps", action = "store", type = int, default = 10)
     parser.add_argument("--device", action = "store", type = str, dest = "device", default = "cuda" if torch.cuda.is_available() else 'cpu')
     parser.add_argument("--batch_idx", action = "store", type = int, default = 0)
+    parser.add_argument("--batch_size", action="store", type=int, default=100, help="Number of problems per batch")
     parser.add_argument("--seed", action = "store", type = int, default = 0)
     parser.add_argument("--proposal_type", action="store", type=str, default="uniform", choices=["uniform", "priority", "restart"], help="Proposal distribution for MCMC: uniform (prefix), priority (perplexity), or restart")
     parser.add_argument("--skip_baselines", action="store_true", help="Skip baseline methods")
 
     args = parser.parse_args()
 
-    random.seed(0)
+    random.seed(args.seed)
 
 
     model = args.model
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     temp = args.temperature
     mcmc_steps = args.mcmc_steps
 
-    save_str = os.path.join(args.save_str, model)
+    save_str = os.path.join(args.save_str, model, "he")
     os.makedirs(save_str, exist_ok=True)
 
 
@@ -79,8 +80,6 @@ if __name__ == "__main__":
             dataset = [json.loads(line) for line in f if line.strip()]
 
 
-
-
     print("dataset done")
 
     config = transformers.AutoConfig.from_pretrained(model_str, trust_remote_code=False, local_files_only=True)
@@ -90,26 +89,32 @@ if __name__ == "__main__":
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
     print("loaded models")
-    output_file = os.path.join(save_str, f"{model}_math_base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
+    
+    start = args.batch_idx * args.batch_size
+    end = min(start + args.batch_size, len(dataset))
+    
+    print(f"Processing problems {start} to {end-1} (batch_idx={args.batch_idx}, batch_size={args.batch_size})")
 
+    output_file = os.path.join(save_str,
+        f"base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
+    
     if os.path.exists(output_file):
         print(f"Found existing results at {output_file}, loading...")
         df_existing = pd.read_csv(output_file)
         results = df_existing.to_dict('records')
         completed_problems = len(results)
-        print(f"Resuming from problem {completed_problems}")
+        print(f"Resuming from problem {completed_problems} within this batch")
     else:
         results = []
         completed_problems = 0
-        
-    start = 0
-    end = 164
 
-    for problem, data in tqdm(enumerate(dataset[start:end]), desc = "Benchmark on HumanEval"):
+    for problem_idx in tqdm(range(start, end), desc=f"Batch {args.batch_idx}"):
          # Skip already completed problems
-        if problem < completed_problems:
+        local_idx = problem_idx - start 
+        if local_idx < completed_problems:
             continue
         
+        data = dataset[problem_idx]
         prompt = data["prompt"]
         task_id = data["task_id"]
 
@@ -191,6 +196,7 @@ if __name__ == "__main__":
 
 
         results.append({
+            "problem_idx": problem_idx,
             "question": prompt,
             "id": task_id,
             "naive_completion": naive_completion,
@@ -201,11 +207,14 @@ if __name__ == "__main__":
         })
 
     
-    df = pd.DataFrame(results)
-    df.to_csv(output_file, index=False)
-    print(f"Saved results to {output_file} ({len(results)} problems completed)")
+        df = pd.DataFrame(results)
+        df.to_csv(output_file, index=False)
+        print(f"Saved results to {output_file} ({len(results)} problems completed in this batch)")
 
-
+    print(f"\n{'='*80}")
+    print(f"Batch {args.batch_idx} completed! Processed problems {start}-{end-1}")
+    print(f"Results saved to: {output_file}")
+    print(f"{'='*80}")
 
 
 

@@ -75,6 +75,7 @@ if __name__ == "__main__":
         dataset = json.load(open(json_file, "r"))
 
     print("dataset done")
+    
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code = True)
     hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, dtype="auto", device_map="auto", trust_remote_code = True)
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
