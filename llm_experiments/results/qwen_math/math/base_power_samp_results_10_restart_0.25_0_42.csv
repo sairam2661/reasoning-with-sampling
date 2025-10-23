@@ -1,5 +1,5 @@
-question,correct_answer,naive_completion,naive_answer,std_completion,std_answer,mcmc_completion,mcmc_answer,acceptance_ratio,proposal_type
-"Convert the point $(0,3)$ in rectangular coordinates to polar coordinates.  Enter your answer in the form $(r,\theta),$ where $r > 0$ and $0 \le \theta < 2 \pi.$","\left( 3, \frac{\pi}{2} \right)"," To convert the point \((0, 3)\) from rectangular coordinates to polar coordinates, we need to find the values of \(r\) and \(\theta\). The formulas for converting from rectangular coordinates \((x, y)\) to polar coordinates \((r, \theta)\) are:
+problem_idx,question,correct_answer,naive_completion,naive_answer,std_completion,std_answer,mcmc_completion,mcmc_answer,acceptance_ratio,proposal_type
+0,"Convert the point $(0,3)$ in rectangular coordinates to polar coordinates.  Enter your answer in the form $(r,\theta),$ where $r > 0$ and $0 \le \theta < 2 \pi.$","\left( 3, \frac{\pi}{2} \right)"," To convert the point \((0, 3)\) from rectangular coordinates to polar coordinates, we need to find the values of \(r\) and \(\theta\). The formulas for converting from rectangular coordinates \((x, y)\) to polar coordinates \((r, \theta)\) are:
 
 \[
 r = \sqrt{x^2 + y^2}
