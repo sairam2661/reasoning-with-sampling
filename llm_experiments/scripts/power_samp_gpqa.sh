@@ -1,34 +1,17 @@
-#!/bin/bash
-#SBATCH --job-name=psamp_math
-#SBATCH -t 0-23:59                 # Runtime in D-HH:MM
-#SBATCH --mem=200000               # Memory pool for all cores (MB)
-#SBATCH --gres=gpu:nvidia_h100_80gb_hbm3:1
-#SBATCH --array=0-47               # 6 shards × 8 seeds = 48 tasks
+MODE=${1:-uniform} 
 
-# --- map array id -> (batch_idx, seed) ---
-NUM_SHARDS=6
-NUM_SEEDS=8
-SEED=$(( SLURM_ARRAY_TASK_ID % NUM_SEEDS ))
-BATCH_IDX=$(( SLURM_ARRAY_TASK_ID / NUM_SEEDS ))
+cd /data/saiva/reasoning-with-sampling/llm_experiments
 
-module load python/3.12.5-fasrc01
-module load cuda/12.4.1-fasrc01
+mkdir -p logs/gpqa
 
-export HF_HOME={HUGGING_FACE_HOME}
-export HF_HUB_CACHE="$HF_HOME/hub"
-export HF_DATASETS_CACHE="$HF_HOME/datasets"
-export TRANSFORMERS_CACHE="$HF_HOME/models"
+export PYTHONPATH="$PYTHONPATH:/data/saiva/reasoning-with-sampling/llm_experiments"
 
-export PYTHONPATH="$PYTHONPATH:{/path/to/reasoning-with-sampling/llm_experiments}"
-export HF_TOKEN={HF_TOKEN}
+CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python power_samp_gpqa.py \
+    --batch_idx=0 --mcmc_steps=10 --batch_size=99 --temp=0.25 --seed=42 \
+    --model=phi --proposal_type=$MODE \
+    > logs/gpqa/${MODE}_1.log 2>&1 &
 
-source activate psamp
-cd /path/to/reasoning-with-sampling/llm_experiments
-
-echo "Running shard BATCH_IDX=${BATCH_IDX} with SEED=${SEED} (task ${SLURM_ARRAY_TASK_ID})"
-python power_samp_gpqa.py \
-  --batch_idx="${BATCH_IDX}" \
-  --mcmc_steps=10 \
-  --temp=0.25 \
-  --seed="${SEED}" \
-  --model=qwen_math
+CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python power_samp_gpqa.py \
+    --batch_idx=1 --mcmc_steps=10 --batch_size=99 --temp=0.25 --seed=42 \
+    --model=phi --proposal_type=$MODE \
+    > logs/gpqa/${MODE}_2.log 2>&1 &

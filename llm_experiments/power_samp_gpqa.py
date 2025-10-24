@@ -42,10 +42,14 @@ if __name__ == "__main__":
     parser.add_argument("--mcmc_steps", action = "store", type = int, default = 10)
     parser.add_argument("--device", action = "store", type = str, dest = "device", default = "cuda" if torch.cuda.is_available() else 'cpu')
     parser.add_argument("--batch_idx", action = "store", type = int, default = 0)
+    parser.add_argument("--batch_size", action="store", type=int, default=100, help="Number of problems per batch")
+    parser.add_argument("--proposal_type", action="store", type=str, default="uniform", choices=["uniform", "priority", "restart"], help="Proposal distribution for MCMC: uniform (prefix), priority (perplexity), or restart")
+    parser.add_argument("--skip_baselines", action="store_true", help="Skip baseline methods")
+
     parser.add_argument("--seed", action = "store", type = int, default = 0)
     args = parser.parse_args()
 
-    random.seed(0)
+    random.seed(args.seed)
 
 
     model = args.model
@@ -55,7 +59,7 @@ if __name__ == "__main__":
     temp = args.temperature
     mcmc_steps = args.mcmc_steps
 
-    save_str = os.path.join(args.save_str, model)
+    save_str = os.path.join(args.save_str, model, "gqpa")
     os.makedirs(save_str, exist_ok=True)
 
 
@@ -83,19 +87,39 @@ if __name__ == "__main__":
 
     print("dataset done")
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code = True)
-    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype="auto", device_map="auto", trust_remote_code = True).to(device)
+    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype="auto", device_map="auto", trust_remote_code = True)
         
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
     print("loaded models")
     results = []
 
-    start = 33*args.batch_idx
-    end = 33*(args.batch_idx+1)
+    start = args.batch_idx * args.batch_size
+    end = min(start + args.batch_size, len(dataset))
+    
+    print(f"Processing problems {start} to {end-1} (batch_idx={args.batch_idx}, batch_size={args.batch_size})")
+    
+    output_file = os.path.join(save_str,
+        f"base_power_samp_results_{mcmc_steps}_{args.proposal_type}_{temp}_{args.batch_idx}_{args.seed}.csv")
 
-
-    for problem, data in tqdm(enumerate(dataset[start:end]), desc = "Benchmark on GPQA"):
-
+    if os.path.exists(output_file):
+        print(f"Found existing results at {output_file}, loading...")
+        df_existing = pd.read_csv(output_file)
+        results = df_existing.to_dict('records')
+        completed_problems = len(results)
+        print(f"Resuming from problem {completed_problems} within this batch")
+    else:
+        results = []
+        completed_problems = 0
+        
+        
+    for problem_idx in tqdm(range(start, end), desc=f"Batch {args.batch_idx}"):
+        # Skip already completed problems within this batch
+        local_idx = problem_idx - start 
+        if local_idx < completed_problems:
+            continue
+        
+        data = dataset[problem_idx]
         choices = [data["Incorrect Answer 1"], data["Incorrect Answer 2"], data["Incorrect Answer 3"]]
         random.shuffle(choices)
         gold_index = random.randint(0, 3)
@@ -111,34 +135,43 @@ if __name__ == "__main__":
         input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
         prefx = [idx.item() for idx in input_ids[0]]
 
+        if not args.skip_baselines:            
+            naive_temp_output = hf_model.generate(input_ids, max_new_tokens=3072, 
+                                    return_dict_in_generate=True, output_scores=True, temperature = temp)
+            
+            print(tokenizer.decode(naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
+            print("naive done")
+            
+            
+            std_output = hf_model.generate(input_ids, max_new_tokens=3072, 
+                                    return_dict_in_generate=True, output_scores=True, do_sample = True)
+            
+            print(tokenizer.decode(std_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
+            print("std done")
+        else:
+            naive_temp_output = None
+            std_output = None
+            
+        mcmc_temp_output, _, _, acceptance_ratio = mcmc_power_samp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072, proposal_type=args.proposal_type)
 
-        naive_temp_output = hf_model.generate(input_ids, max_new_tokens=3072, 
-                                return_dict_in_generate=True, output_scores=True, temperature = temp)
-        
-        print(tokenizer.decode(naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
-        print("naive done")
-        
-        
-        std_output = hf_model.generate(input_ids, max_new_tokens=3072, 
-                                return_dict_in_generate=True, output_scores=True, do_sample = True)
-        
-        print(tokenizer.decode(std_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
-        print("std done")
-
-        mcmc_temp_output, _, _, acceptance_ratio = mcmc_power_samp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072)
-
-        print(len(std_output))
-        print(len(naive_temp_output))
+        if not args.skip_baselines:
+            print(len(std_output))
+            print(len(naive_temp_output))
+            
         print(len(mcmc_temp_output))
         print(tokenizer.decode(torch.tensor([mcmc_temp_output], dtype=torch.long, device=device).squeeze().to("cpu"), skip_special_tokens=True))
         print("mcmc done")
 
-        naive_generated_ids = naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
-        std_generated_ids = std_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
+        if not args.skip_baselines:
+            naive_generated_ids = naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
+            std_generated_ids = std_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
+            naive_completion = tokenizer.decode(naive_generated_ids, skip_special_tokens=True)
+            std_completion = tokenizer.decode(std_generated_ids, skip_special_tokens=True)
+        else:
+            naive_completion = ""
+            std_completion = ""
+            
         mcmc_temp_ids = torch.tensor([mcmc_temp_output], dtype=torch.long, device=device).squeeze().to("cpu")
-
-        naive_completion = tokenizer.decode(naive_generated_ids, skip_special_tokens=True)
-        std_completion = tokenizer.decode(std_generated_ids, skip_special_tokens=True)
         mcmc_completion = tokenizer.decode(mcmc_temp_ids, skip_special_tokens=True)
 
         
@@ -146,18 +179,24 @@ if __name__ == "__main__":
 
 
         results.append({
+            "problem_idx": problem_idx,
             "question": query_prompt,
             "correct_answer": answer,
             "naive_completion": naive_completion,
             "std_completion": std_completion,
             "mcmc_completion": mcmc_completion,
+            "acceptance_ratio": acceptance_ratio,
+            "proposal_type": args.proposal_type,
         })
 
-    
-    df = pd.DataFrame(results)
-    df.to_csv(os.path.join(save_str, model+"_gpqa_base_power_samp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
-    
+        df = pd.DataFrame(results)
+        df.to_csv(output_file, index=False)
+        print(f"Saved results to {output_file} ({len(results)} problems completed in this batch)")
 
+    print(f"\n{'='*80}")
+    print(f"Batch {args.batch_idx} completed! Processed problems {start}-{end-1}")
+    print(f"Results saved to: {output_file}")
+    print(f"{'='*80}")
 
 
 
