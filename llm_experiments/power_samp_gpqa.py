@@ -86,8 +86,8 @@ if __name__ == "__main__":
 
 
     print("dataset done")
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code = True)
-    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype="auto", device_map="auto", trust_remote_code = True)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_str)
+    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype="auto", device_map="auto")
         
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
