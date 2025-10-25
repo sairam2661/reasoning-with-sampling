@@ -76,8 +76,8 @@ if __name__ == "__main__":
 
     print("dataset done")
     
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code = True)
-    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, dtype="auto", device_map="auto", trust_remote_code = True)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, cache_dir = '/trunk/model-hub')
+    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, dtype="auto", device_map="auto", cache_dir = '/trunk/model-hub')
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
     print("loaded models")
@@ -116,13 +116,13 @@ if __name__ == "__main__":
         prefx = [idx.item() for idx in input_ids[0]]
 
         if not args.skip_baselines:            
-            naive_temp_output = hf_model.generate(input_ids, max_new_tokens=3072, 
+            naive_temp_output = hf_model.generate(input_ids, max_new_tokens=576, 
                                 return_dict_in_generate=True, output_scores=True, temperature=temp)
         
             print(tokenizer.decode(naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
             print("naive done")
             
-            std_output = hf_model.generate(input_ids, max_new_tokens=3072, 
+            std_output = hf_model.generate(input_ids, max_new_tokens=576, 
                                     return_dict_in_generate=True, output_scores=True, do_sample=True)
             
             print(tokenizer.decode(std_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
@@ -132,7 +132,7 @@ if __name__ == "__main__":
             std_output = None
 
         mcmc_power_samp_output, _, _, acceptance_ratio = mcmc_power_samp(
-            autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072, proposal_type=args.proposal_type
+            autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=576, block_num=3, proposal_type=args.proposal_type
         )
 
         if not args.skip_baselines:
@@ -167,7 +167,6 @@ if __name__ == "__main__":
         print(answer)
         print(f'Acceptance: {acceptance_ratio}')
 
-        # Append current result
         results.append({
             "problem_idx": problem_idx,
             "question": question,
