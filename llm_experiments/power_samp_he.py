@@ -82,9 +82,9 @@ if __name__ == "__main__":
 
     print("dataset done")
 
-    config = transformers.AutoConfig.from_pretrained(model_str, trust_remote_code=False, local_files_only=True)
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code=False, local_files_only=True)
-    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, config=config, torch_dtype="auto", device_map="auto", trust_remote_code=False, local_files_only=True).to(device)
+    config = transformers.AutoConfig.from_pretrained(model_str)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_str)
+    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, config=config, torch_dtype="auto", device_map="auto").to(device)
 
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
@@ -148,14 +148,14 @@ if __name__ == "__main__":
         prefx = [idx.item() for idx in input_ids[0]]
 
         if not args.skip_baselines:  
-            naive_temp_output = hf_model.generate(input_ids, max_new_tokens=3072, 
+            naive_temp_output = hf_model.generate(input_ids, max_new_tokens=1152, 
                                     return_dict_in_generate=True, output_scores=True, temperature = temp)
             
             print(tokenizer.decode(naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
             print("naive done")
             
             
-            std_output = hf_model.generate(input_ids, max_new_tokens=3072, 
+            std_output = hf_model.generate(input_ids, max_new_tokens=1152, 
                                     return_dict_in_generate=True, output_scores=True, do_sample = True)
             
             print(tokenizer.decode(std_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
@@ -164,7 +164,7 @@ if __name__ == "__main__":
             naive_temp_output = None
             std_output = None
 
-        mcmc_temp_output, _, _, acceptance_ratio = mcmc_power_samp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=3072, proposal_type=args.proposal_type)
+        mcmc_temp_output, _, _, acceptance_ratio = mcmc_power_samp(autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=1152, proposal_type=args.proposal_type)
 
         if not args.skip_baselines:
             print(len(std_output))
@@ -188,7 +188,7 @@ if __name__ == "__main__":
             naive_answer = ""
             std_answer = ""
             
-        mcmc_temp_ids = torch.tensor([mcmc_temp_output], dtype=torch.long, device=device).squeeze().to("cpu")
+        mcmc_temp_ids = torch.tensor([mcmc_temp_output[len(prefx):]], dtype=torch.long, device=device).squeeze().to("cpu")
         mcmc_completion = tokenizer.decode(mcmc_temp_ids, skip_special_tokens=True)
         mcmc_answer = parse_answer(mcmc_completion)
 
@@ -215,28 +215,4 @@ if __name__ == "__main__":
     print(f"Batch {args.batch_idx} completed! Processed problems {start}-{end-1}")
     print(f"Results saved to: {output_file}")
     print(f"{'='*80}")
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -13,7 +13,7 @@ import os
 from grader_utils.he_execute import check_correctness
 
 
-def read_problems(evalset_file: str = "./HumanEval.jsonl") -> Dict[str, Dict]:
+def read_problems(evalset_file: str = "./data/HumanEval.jsonl") -> Dict[str, Dict]:
     return {task["task_id"]: task for task in stream_jsonl(evalset_file)}
 
 
@@ -85,7 +85,7 @@ def evaluate_functional_correctness(
     k: List[int] = [1, 10, 100],
     n_workers: int = 4,
     timeout: float = 3.0,
-    problem_file: str = "./HumanEval.jsonl",
+    problem_file: str = "./data/HumanEval.jsonl",
 ):
     """
     Evaluates the functional correctness of generated samples, and writes
