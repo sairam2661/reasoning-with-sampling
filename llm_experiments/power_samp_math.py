@@ -116,13 +116,13 @@ if __name__ == "__main__":
         prefx = [idx.item() for idx in input_ids[0]]
 
         if not args.skip_baselines:            
-            naive_temp_output = hf_model.generate(input_ids, max_new_tokens=576, 
+            naive_temp_output = hf_model.generate(input_ids, max_new_tokens=960, 
                                 return_dict_in_generate=True, output_scores=True, temperature=temp)
         
             print(tokenizer.decode(naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
             print("naive done")
             
-            std_output = hf_model.generate(input_ids, max_new_tokens=576, 
+            std_output = hf_model.generate(input_ids, max_new_tokens=960, 
                                     return_dict_in_generate=True, output_scores=True, do_sample=True)
             
             print(tokenizer.decode(std_output[0][:, len(input_ids[0]):].squeeze().to("cpu"), skip_special_tokens=True))
@@ -132,7 +132,7 @@ if __name__ == "__main__":
             std_output = None
 
         mcmc_power_samp_output, _, _, acceptance_ratio = mcmc_power_samp(
-            autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=576, block_num=3, proposal_type=args.proposal_type
+            autoreg_sampler, prefx, temp, mcmc_steps, max_new_tokens=960, block_num=5, proposal_type=args.proposal_type
         )
 
         if not args.skip_baselines:
