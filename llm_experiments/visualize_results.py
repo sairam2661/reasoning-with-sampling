@@ -15,6 +15,10 @@ def ensure_correctness_columns(df):
         df["std_correct"] = [
             safe_grade(a, c) for a, c in zip(df.get("std_answer", []), df.get("correct_answer", []))
         ]
+    if "naive_correct" not in df.columns:
+        df["naive_correct"] = [
+            safe_grade(a, c) for a, c in zip(df.get("naive_answer", []), df.get("correct_answer", []))
+        ]
     if "mcmc_correct" not in df.columns:
         df["mcmc_correct"] = [
             safe_grade(a, c) for a, c in zip(df.get("mcmc_answer", []), df.get("correct_answer", []))
@@ -33,6 +37,7 @@ def infer_proposal_from_filename(path):
 
 def load_one_csv(csv_path):
     df = pd.read_csv(csv_path)
+    df = df.head(169)
     cols = {c: c.strip() for c in df.columns}
     df.rename(columns=cols, inplace=True)
 
@@ -50,6 +55,7 @@ def load_one_csv(csv_path):
     keep_cols = [
         "problem_idx", "correct_answer",
         "std_answer", "std_correct",
+        "naive_answer", "naive_correct",
         "mcmc_answer", "mcmc_correct",
         "proposal"
     ]
@@ -65,21 +71,27 @@ def aggregate_for_plot(all_df):
 
     base_df = (all_df
                .sort_values(["problem_idx"])
-               .drop_duplicates(subset=["problem_idx"], keep="first"))
+               .drop_duplicates(subset=["problem_idx"], keep="last"))
     base_acc = base_df["std_correct"].mean() if not base_df.empty else 0.0
     base_n = int(base_df.shape[0])
-    methods.append("Base")
+    methods.append("Std. Samp. (T=1.0)")
     accuracies.append(base_acc)
     counts.append(base_n)
 
+    naive_acc = base_df["naive_correct"].mean() if not base_df.empty else 0.0
+    naive_n = int(base_df.shape[0])
+    methods.append("Std. Samp. (T=0.25)")
+    accuracies.append(naive_acc)
+    counts.append(naive_n)
+    
     proposals = sorted([p for p in all_df["proposal"].dropna().unique()])
     for p in proposals:
         sub = (all_df[all_df["proposal"] == p]
                .sort_values(["problem_idx"])
-               .drop_duplicates(subset=["problem_idx"], keep="first"))
+               .drop_duplicates(subset=["problem_idx"], keep="last"))
         acc = sub["mcmc_correct"].mean() if not sub.empty else 0.0
         n = int(sub.shape[0])
-        methods.append(p.capitalize())
+        methods.append(f"MCMC {p.capitalize()} (10)")
         accuracies.append(acc)
         counts.append(n)
 
@@ -103,7 +115,7 @@ def plot_bar(methods, accuracies, counts, title, out_png):
 
     for rect, acc, n in zip(bars, accuracies, counts):
         h = rect.get_height()
-        label = f"{acc*100:.1f}% · n={n}"
+        label = f"{acc*100:.1f}% "
         ax.text(rect.get_x() + rect.get_width() / 2.0,
                 h + 0.01,
                 label,
@@ -118,7 +130,7 @@ def main():
     parser.add_argument(
         "--folder",
         type=str,
-        default="llm_experiments/results/qwen_math/math",
+        default="results/phi/math",
         help="Folder containing CSV result files (batched)."
     )
     parser.add_argument(
@@ -130,7 +142,7 @@ def main():
     parser.add_argument(
         "--title",
         type=str,
-        default="Method Comparison (MATH 500)",
+        default="Math 500 - phi-3.5-mini-instruct",
         help="Plot title."
     )
     args = parser.parse_args()
